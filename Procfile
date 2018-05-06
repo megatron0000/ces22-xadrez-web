@@ -1,1 +1,1 @@
-web: daphne webxadrez.asgi:application --port $PORT --bind 0.0.0.0 -v2
+web: bin/start-nginx daphne webxadrez.asgi:application -u unix:///tmp/nginx.socket -v2
