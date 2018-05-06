@@ -44,7 +44,7 @@ http {
             proxy_ignore_headers   Set-Cookie;
             proxy_intercept_errors on;
             add_header             Cache-Control max-age=31536000;
-            proxy_pass             <%= ENV['STATIC_URL'] %>;
+            proxy_pass             https://webxadrez-668e3.firebaseapp.com/;
         }
 
 		location / {
