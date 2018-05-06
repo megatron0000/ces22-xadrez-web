@@ -1,1 +1,1 @@
-web: bin/start-nginx daphne webxadrez.asgi:application -u unix:///tmp/nginx.socket -v2
+web: bin/start-nginx daphne -u /tmp/nginx.socket -v2 webxadrez.asgi:application
