@@ -25,7 +25,7 @@ SECRET_KEY = 's2@garpy5!f@ye#*!2+0y#ruftsy#hjn(29qkp(4j19*os$iop'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['webxadrez.herokuapp.com']
 
 
 # Application definition
