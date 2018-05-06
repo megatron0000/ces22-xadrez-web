@@ -14,7 +14,7 @@
     var roomName = {{ room_name_json }};
 
     var chatSocket = new WebSocket(
-        'wss://' + window.location.host +
+        (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
         '/ws/chat/' + roomName + '/');
 
     chatSocket.onmessage = function(e) {
