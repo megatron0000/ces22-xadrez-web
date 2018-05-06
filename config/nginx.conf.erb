@@ -44,5 +44,21 @@ http {
 			proxy_set_header Upgrade $http_upgrade;
 			proxy_set_header Connection "upgrade";
 		}
+
+		 location /static/ {
+            proxy_http_version     1.1;
+              proxy_set_header       Connection "";
+              proxy_set_header       Authorization '';
+              proxy_set_header       Host yanpy.dev.s3.amazonaws.com;
+              proxy_hide_header      x-amz-id-2;
+              proxy_hide_header      x-amz-request-id;
+              proxy_hide_header      x-amz-meta-server-side-encryption;
+              proxy_hide_header      x-amz-server-side-encryption;
+              proxy_hide_header      Set-Cookie;
+              proxy_ignore_headers   Set-Cookie;
+              proxy_intercept_errors on;
+              add_header             Cache-Control max-age=31536000;
+              proxy_pass             <%= ENV['STATIC_URL'] %>;
+    }
 	}
 }
