@@ -36,7 +36,7 @@ def set_account(request):
 
 def oauth_redirect_internal(request):
     flow = getflow(request)
-    flow.fetch_token(authorization_response=request.get_full_path())
+    flow.fetch_token(authorization_response=request.get_full_path().replace('http://', 'https://'))
     credentials = flow.credentials
     try:
         instance = UserToken.objects.get(pk=1)
