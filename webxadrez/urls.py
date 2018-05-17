@@ -17,10 +17,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls import url
 
-
 urlpatterns = [
+    path('accounts/', include('emailsignup.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
     path('polls/', include('polls.urls'), name="polls"),
     url(r'^chat/', include('chat.urls')),
+    path('gmailbox/', include('gmailbox.urls'))
 ]

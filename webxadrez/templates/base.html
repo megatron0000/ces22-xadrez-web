@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webxadrez</title>
+    <link rel="stylesheet" href="{% static 'vendor/foundation.css' %}">
+    <link rel="stylesheet" href="{% static 'base.css' %}">
+  </head>
+  <body>
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <ul class="menu">
+          <li class="menu-text">Webxadrez</li>
+        </ul>
+      </div>
+      <div class="top-bar-right">
+        <ul class="menu">
+          <li class="active"><a href="#">One</a></li>
+          <li><a href="#">Two</a></li>
+          <li><a href="{% url 'login' %}">Login</a></li>
+          <li><a href="{% url 'logout' %}">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+    <div id="base-content">
+        {% block content %} {% endblock %}
+    </div>
+    <script src="{% static 'vendor/jquery.js' %}"></script>
+    <script src="{% static 'vendor/what-input.js' %}"></script>
+    <script src="{% static 'vendor/foundation.js' %}"></script>
+  </body>
+</html>

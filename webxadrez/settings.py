@@ -26,11 +26,19 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(':') + ['localhost']
 
+ACCOUNT_ACTIVATION_DAYS = 7
+
 # Application definition
 
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'gmailbox',
+    'emailsignup',
+    'webxadrez',
     'django.contrib.auth',
+    'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -39,6 +47,7 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'rest_framework',
     'channels',
+    'vendor'
 ]
 
 ASGI_APPLICATION = "webxadrez.routing.application"
