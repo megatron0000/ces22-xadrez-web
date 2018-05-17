@@ -38,14 +38,16 @@ class GmailBackend(BaseEmailBackend):
         for mail in email_messages:
             subject = mail.subject or ''
             body = mail.body
-            to = [', '].join(mail.to)  # comma-separated list of emails
+            to = ', '.join(mail.to)  # comma-separated list of emails
             message = MIMEText(body)
             message['to'] = to
-            message['from'] = self.service.users().getProfile('me')['emailAddress']
+            mailadd = self.service.users().getProfile(userId='me').json()
+            print(mailadd)
+            message['from'] = mailadd['emailAddress']
             message['subject'] = subject
             successes += 1
             try:
-                self.service.users().messages().send('me', {
+                self.service.users().messages().send(userId='me', body={
                     'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()
                 })
             except:

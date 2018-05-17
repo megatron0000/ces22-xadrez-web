@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from emailsignup.forms import SignUpForm
 from emailsignup.tokens import account_activation_token
 
+
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
