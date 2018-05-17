@@ -12,8 +12,9 @@ def getflow(request):
 
     # Indicate where the API server will redirect the user after the user completes
     # the authorization flow. The redirect URI is required.
-    flow.redirect_uri = request.build_absolute_uri(reverse('gmailbox:oauth_redirect_internal')).replace('http://',
-                                                                                                        'https://')
+    flow.redirect_uri = request.build_absolute_uri(
+        reverse('gmailbox:oauth_redirect_internal')).replace('http://',
+                                                             'https://')
     return flow
 
 
@@ -36,7 +37,7 @@ def set_account(request):
 
 def oauth_redirect_internal(request):
     flow = getflow(request)
-    flow.fetch_token(authorization_response=request.get_full_path().replace('http://', 'https://'))
+    flow.fetch_token(authorization_response=request.get_full_path())
     credentials = flow.credentials
     try:
         instance = UserToken.objects.get(pk=1)
@@ -58,7 +59,7 @@ def oauth_redirect_internal(request):
         )
         instance.save()
     finally:
-        return request.redirect(reverse('gmailbox:oauth_redirect'))
+        return redirect(reverse('gmailbox:oauth_redirect'))
 
 
 def oauth_redirect(request):
