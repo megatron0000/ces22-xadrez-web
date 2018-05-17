@@ -1,13 +1,13 @@
-import os
 import google_auth_oauthlib.flow
 from django.urls import reverse
 from django.shortcuts import redirect, render
 from gmailbox.models import UserToken
+from django.conf import settings
 
 
 def getflow(request):
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        os.environ.get('GMAIL_CLIENT_SECRET_PATH'),
+        settings.GMAIL_CLIENT_SECRET_PATH,
         scopes=['https://www.googleapis.com/auth/gmail.modify'])
 
     # Indicate where the API server will redirect the user after the user completes

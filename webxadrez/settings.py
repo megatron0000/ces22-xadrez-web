@@ -26,12 +26,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(':') + ['localhost']
 
-ACCOUNT_ACTIVATION_DAYS = 7
-
 # Application definition
 
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'gmailbox.backend.GmailBackend'
+
+GMAIL_CLIENT_SECRET_PATH = os.environ.get('GMAIL_CLIENT_SECRET_PATH')
 
 INSTALLED_APPS = [
     'gmailbox',
