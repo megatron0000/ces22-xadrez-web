@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'rest_framework',
     'channels',
-    'vendorlib'
+    'vendor'
 ]
 
 ASGI_APPLICATION = "webxadrez.routing.application"
