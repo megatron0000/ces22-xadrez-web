@@ -1,1 +1,0 @@
-Depends on django.contrib.auth app

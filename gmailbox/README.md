@@ -21,7 +21,8 @@ will be brought back to the server after
 approving access to his account; The 
 second is another redirect, done 
 immediatly after the second, where a template called
-``gmailbox/oauth_redirect.html`` will be served (you should 
+``gmailbox/oauth_redirect.html`` will be served with a 
+ context variable ``message``(you should 
 provide this template)
 
 The overall flow goes like:
@@ -30,6 +31,6 @@ The overall flow goes like:
 - He is redirected to google for granting
 access
 - Google redirects him back to ``prefix/oauth_redirect_internal``
-- This app collects access and refresh tokens
+- This app collects access and refresh tokens (or not, should an error happen)
 - This app redirects the user to ``prefix/oauth_redirect`` 
 

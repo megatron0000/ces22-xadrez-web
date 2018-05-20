@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 import google_auth_oauthlib.flow
 from django.urls import reverse
 from django.shortcuts import redirect, render
@@ -12,9 +13,7 @@ def getflow(request):
 
     # Indicate where the API server will redirect the user after the user completes
     # the authorization flow. The redirect URI is required.
-    flow.redirect_uri = request.build_absolute_uri(
-        reverse('gmailbox:oauth_redirect_internal')).replace('http://',
-                                                             'https://')
+    flow.redirect_uri = request.build_absolute_uri(reverse('gmailbox:oauth_redirect_internal'))
     return flow
 
 
@@ -37,17 +36,25 @@ def set_account(request):
 
 def oauth_redirect_internal(request):
     flow = getflow(request)
-    flow.fetch_token(authorization_response=request.get_full_path())
-    credentials = flow.credentials
+    # catch situations where, for example, user denied access
     try:
-        instance = UserToken.objects.get(pk=1)
-        instance.token = credentials.token,
-        instance.refresh_token = credentials.refresh_token,
-        instance.token_uri = credentials.token_uri,
-        instance.client_id = credentials.client_id,
-        instance.client_secret = credentials.client_secret,
-        instance.scopes = credentials.scopes
-        instance.save()
+        flow.fetch_token(authorization_response=request.get_full_path())
+        credentials = flow.credentials
+    except:
+        message = 'An error occurred'
+        return redirect(reverse('gmailbox:oauth_redirect') + '?message=' + message)
+    try:
+        # refresh_token only comes on first authorization
+        # repeated auth requests return None
+        if credentials.refresh_token is not None:
+            instance = UserToken.objects.get()
+            instance.token = credentials.token,
+            instance.refresh_token = credentials.refresh_token,
+            instance.token_uri = credentials.token_uri,
+            instance.client_id = credentials.client_id,
+            instance.client_secret = credentials.client_secret,
+            instance.scopes = credentials.scopes
+            instance.save()
     except UserToken.DoesNotExist:
         instance = UserToken(
             token=credentials.token,
@@ -59,8 +66,11 @@ def oauth_redirect_internal(request):
         )
         instance.save()
     finally:
-        return redirect(reverse('gmailbox:oauth_redirect'))
+        message = _('You setup your email as the server\'s email')
+        return redirect(reverse('gmailbox:oauth_redirect') + '?message=' + message)
 
 
 def oauth_redirect(request):
-    return render(request, 'gmailbox/oauth_redirect.html')
+    return render(request, 'gmailbox/oauth_redirect.html', context={
+        'message': request.GET.get('message', '')
+    })

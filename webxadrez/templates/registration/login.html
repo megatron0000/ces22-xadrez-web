@@ -48,11 +48,13 @@
             <div class="medium-6 cell">
                 {{ form.password.label_tag }}
                 {{ form.password }}
+                <small><a href="{% url 'password_reset' %}">Forgot your password ?</a></small>
             </div>
             <div class="medium-12 cell"><input type="submit" class="button" value="login"/></div>
             <input type="hidden" name="next" value="{{ next }}"/>
         </div>
     </div>
 </form>
+
 
 {% endblock %}
