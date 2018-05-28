@@ -22,6 +22,6 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
     path('polls/', include('polls.urls'), name="polls"),
-    url(r'^chat/', include('chat.urls')),
-    path('gmailbox/', include('gmailbox.urls'))
+    path('gmailbox/', include('gmailbox.urls')),
+    path('chatchannels/', include('chatchannels.urls'))
 ]

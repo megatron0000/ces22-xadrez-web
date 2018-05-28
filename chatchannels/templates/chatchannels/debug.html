@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Chat Channels</title>
+    </head>
+    <body>
+        <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
+        <input id="chat-message-input" type="text" size="100"/><br/>
+        <input id="chat-message-submit" type="button" value="Send"/>
+        <hr>
+        Create a chat channel
+        <br/>
+        <input id="channel-create-submit" type="button" value="Create"/>
+        <hr>
+        Connect to an existing channel
+        <input type="text" placeholder="channel id" id="channel-connect-input">
+        <input type="button" value="Connect" id="channel-connect-submit">
+        <hr>
+        Add an admin to current channel (will do nothing if you are not an admin yourself
+        <input type="text" placeholder="username" id="channel-admin-input">
+        <input type="button" value="Add this user" id="channel-admin-submit">
+    </body>
+    <script src="{% static 'vendor/jquery.js' %}"></script>
+    {% csrf_token %}
+    <script type="text/javascript">
+    // using jQuery
+    let csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    </script>
+    <script>
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+    </script>
+    <script>
+    // document.querySelector('#room-name-input').focus();
+    let create_channel_endpoint = '{{create_channel_endpoint}}';
+    let connect_channel_endpoint = '{{connect_channel_endpoint}}';
+    document.querySelector('#channel-create-submit').onclick = function(e) {
+        $.ajax(create_channel_endpoint, {
+            method: 'POST',
+            data: { is_public: false }
+        }).done(function(data) {
+            console.log(data)
+        });
+    }
+    document.querySelector('#channel-connect-submit').onclick = function(e) {
+        let channel_id = document.querySelector('#channel-connect-input').value;
+        let chatSocket = new WebSocket(
+        (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
+        connect_channel_endpoint + channel_id);
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data);
+            console.log('message received::', e.data);
+            var message = data['message'];
+            document.querySelector('#chat-log').value += (message + '\n');
+        };
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+            console.log(e);
+        };
+        console.log(chatSocket);
+        window.chatSocket = chatSocket;
+    };
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        let messageInputDom = document.querySelector('#chat-message-input');
+        let message = messageInputDom.value;
+        console.log('about to submit::', message);
+        window.chatSocket ? window.chatSocket.send(JSON.stringify({
+            'type': 'message',
+            'message': message
+        })) : null;
+
+        messageInputDom.value = '';
+    };
+    document.querySelector('#channel-admin-submit').onclick = function(e) {
+        let adminInputDom = document.querySelector('#channel-admin-input');
+        let name = adminInputDom.value;
+        window.chatSocket ? window.chatSocket.send(JSON.stringify({
+            'type': 'add_admin',
+            'username': name
+        })) : null;
+
+        adminInputDom.value = '';
+    };
+    </script>
+</html>

@@ -34,9 +34,6 @@ EMAIL_BACKEND = 'gmailbox.backend.GmailBackend'
 GMAIL_CLIENT_SECRET_PATH = os.environ.get('GMAIL_CLIENT_SECRET_PATH')
 
 INSTALLED_APPS = [
-    'gmailbox',
-    'emailsignup',
-    'webxadrez',
     'django.contrib.auth',
     'django.contrib.admin',
     'django.contrib.contenttypes',
@@ -44,9 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'polls.apps.PollsConfig',
-    'chat.apps.ChatConfig',
     'rest_framework',
     'channels',
+    'gmailbox',
+    'emailsignup',
+    'webxadrez',
+    'chatchannels',
     'vendor'
 ]
 
@@ -57,6 +57,9 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication'  # Works for AJAX
     ]
 }
 
