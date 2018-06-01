@@ -21,6 +21,17 @@
         Add an admin to current channel (will do nothing if you are not an admin yourself
         <input type="text" placeholder="username" id="channel-admin-input">
         <input type="button" value="Add this user" id="channel-admin-submit">
+        <hr>
+        Add a user to allowed participants
+        <input type="text" placeholder="username" id="channel-allow-input">
+        <input type="button" value="Add this user" id="channel-allow-submit">
+        <hr>
+        Remove a user from allowed participants
+        <input type="text" placeholder="username" id="channel-disallow-input">
+        <input type="button" value="Remove this user" id="channel-disallow-submit">
+        <hr>
+        Switch channel public-status
+        <input type="button" value="Switch" id="channel-public-submit">
     </body>
     <script src="{% static 'vendor/jquery.js' %}"></script>
     {% csrf_token %}
@@ -54,6 +65,9 @@
         });
     }
     document.querySelector('#channel-connect-submit').onclick = function(e) {
+        if (window.chatSocket) {
+            window.chatSocket.close();
+        }
         let channel_id = document.querySelector('#channel-connect-input').value;
         let chatSocket = new WebSocket(
         (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
@@ -98,5 +112,40 @@
 
         adminInputDom.value = '';
     };
+    document.querySelector('#channel-allow-submit').onclick = function(e) {
+        let allowInputDom = document.querySelector('#channel-allow-input');
+        let name = allowInputDom.value;
+        window.chatSocket ? window.chatSocket.send(JSON.stringify({
+            'type': 'allow',
+            'username': name
+        })) : null;
+
+        allowInputDom.value = '';
+    };
+    document.querySelector('#channel-disallow-submit').onclick = function(e) {
+        let dom = document.querySelector('#channel-disallow-input');
+        let name = dom.value;
+        console.log('dissallowing', {
+            'type': 'disallow',
+            'username': name
+        });
+        window.chatSocket ? window.chatSocket.send(JSON.stringify({
+            'type': 'disallow',
+            'username': name
+        })) : null;
+
+        dom.value = '';
+    };
+    document.querySelector('#channel-public-submit').onclick = function(e) {
+        if (typeof window.public_status === 'undefined') {
+            window.public_status = true;
+        } else {
+            window.public_status = ! window.public_status;
+        }
+        window.chatSocket ? window.chatSocket.send(JSON.stringify({
+            'type': 'publicize',
+            'public': window.public_status
+        })) : null;
+    }
     </script>
 </html>
