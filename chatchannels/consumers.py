@@ -17,7 +17,7 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
         self.channel_inst = None  # Instance of a ChatChannel model
         self.username = None  # username of downstream user
         self.channel_group_name = None  # Channel-layer level group name
-        self.sync_group_send = async_to_sync(self.channel_layer.group_send)
+        self.sync_group_send = None
 
     def __isadmin(self):
         """
@@ -26,6 +26,7 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
         return self.channel_inst.admins.filter(username=self.username).exists()
 
     def connect(self):
+        self.sync_group_send = async_to_sync(self.channel_layer.group_send)
         self.channel_group_name = None
         self.channel_id = self.scope['url_route']['kwargs']['chat_channel_id']
         try:
