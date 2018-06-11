@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'emailsignup',
     'webxadrez',
     'chatchannels',
+    'chessgames',
     'vendor'
 ]
 

@@ -15,7 +15,7 @@ def index(request):
     })
 
 
-def _request_channel(admins, is_public):
+def create_channel(admins, is_public):
     """Internal use. For creating channels not necessarily from an HttpRequest"""
     channel = ChatChannel(is_public=is_public, history=[])
     channel.save()
@@ -33,7 +33,7 @@ def request_channel(request):
     """
     if request.method == 'POST':
         return JsonResponse({
-            'id': _request_channel(
+            'id': create_channel(
                 [request.user],
                 is_public=json.loads(request.POST.get('is_public', False))
             ).id
