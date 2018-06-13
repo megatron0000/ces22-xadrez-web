@@ -10,7 +10,7 @@ class Profile(models.Model):
     # other fields...
 
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=User, dispatch_uid="update_user_profile")
 def update_user_profile(sender, instance, created, **kwargs):
     if created:
         email_confirmed = instance.is_superuser

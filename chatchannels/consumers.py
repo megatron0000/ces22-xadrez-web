@@ -7,7 +7,8 @@ from chatchannels.models import ChatChannel
 
 class ChatChannelConsumer(JsonWebsocketConsumer):
     """
-    private (__*) methods are for receiving from downstream
+    private (__*) methods are for receiving from downstream (but the entry poiny
+    from downstream is receive_json.
     g_* methods are for receiving from channel group
     """
 
@@ -27,12 +28,12 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
 
     def connect(self):
         self.sync_group_send = async_to_sync(self.channel_layer.group_send)
-        self.channel_group_name = None
+
         self.channel_id = self.scope['url_route']['kwargs']['chat_channel_id']
         try:
             self.channel_inst = ChatChannel.objects.get(pk=self.channel_id)
         except ChatChannel.DoesNotExist:
-            return self.close(code=400)
+            return self.close(code=404)
 
         self.username = self.scope['user'].username
         if not self.channel_inst.is_public \
@@ -50,10 +51,21 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
 
         self.accept()
 
+        self.group_send({
+            'type': 'g_entered',
+            'username': self.username
+        })
+
     def disconnect(self, close_code):
         # Leave room group
         if self.channel_group_name is None:
             return
+
+        self.group_send({
+            'type': 'g_exit',
+            'username': self.username
+        })
+
         async_to_sync(self.channel_layer.group_discard)(
             self.channel_group_name,
             self.channel_name
@@ -173,24 +185,26 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
                 'type': 'g_privatized'
             })
 
-    # Receive message from WebSocket
-    def receive_json(self, content, **kwargs):
+    def receive_json(self, event, **kwargs):
+        """
+        Receives message directly from associated client
+        """
         try:
-            msg_type = content['type']
+            msg_type = event['type']
         except KeyError:
             return
         if msg_type == 'add_admin':
-            self.__add_admin(content)
+            self.__add_admin(event)
         elif msg_type == 'message':
-            self.__message(content)
+            self.__message(event)
         elif msg_type == 'rm_admin':
             return  # Deprecated
         elif msg_type == 'allow':
-            self.__allow(content)
+            self.__allow(event)
         elif msg_type == 'disallow':
-            self.__disallow(content)
+            self.__disallow(event)
         elif msg_type == 'publicize':
-            self.__publicize(content)
+            self.__publicize(event)
 
     def g_disallow(self, event):
         """
@@ -211,10 +225,11 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
         message = event['message']
         # Send message to WebSocket
         self.send_json({
+            'type': 'message',
             'message': message
         })
 
-    def g_privatized(self, content):
+    def g_privatized(self, event):
         """
         Kicks user from the channel if it is set to 'private' and user
         does not belong to 'allowed_participants'
@@ -222,3 +237,21 @@ class ChatChannelConsumer(JsonWebsocketConsumer):
         """
         if not self.channel_inst.allowed_participants.filter(username=self.username).exists():
             return self.close(403)
+
+    def g_entered(self, event):
+        self.send_json({
+            'type': 'entered',
+            'username': event['username']
+        })
+
+    def g_exit(self, event):
+        self.send_json({
+            'type': 'exit',
+            'username': event['username']
+        })
+
+    def g_channel_deleted(self, event):
+        """
+        Sent (maybe not exclusively) from pre_delete signal of ChatChannel
+        """
+        self.close()

@@ -54,4 +54,7 @@ does not alter 'allowed_participants' list). Does nothing if 'username' does not
 - ``{ type: 'message', message: string }``: When a message is received from upstream (sent by the client itself
 or other connected client)
 
-**maybe more status-inform messages**
+- ``{ type: 'entered', username: string }``: When someone enters the channel
+
+- ``{ type: 'exit', username: string }``: When someone exits the channel
+
