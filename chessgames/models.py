@@ -3,7 +3,9 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from chatchannels.models import ChatChannel
 from django.dispatch import receiver
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
+from channels.layers import get_channel_layer
+from channels.consumer import async_to_sync
 
 
 class ChessGame(models.Model):
@@ -24,11 +26,19 @@ class GameSession(models.Model):
     ready = models.BooleanField(default=False)
 
 
-@receiver(post_delete, sender=GameSession, dispatch_uid="delete_game_session")
-def delete_game_session(sender, instance, **kwargs):
+@receiver(post_delete, sender=GameSession, dispatch_uid="delete_game_session_associates")
+def delete_game_session_associates(sender, instance, **kwargs):
     """
     A GameSession owns a channel and a chess_game.
     Delete the session and everything goes away
     """
     instance.channel.delete()
     instance.chess_game.delete()
+
+
+@receiver(pre_delete, sender=ChessGame, dispatch_uid="warn_open_chessgame_consumers")
+def warn_open_chessgame_consumers(sender, instance, **kwargs):
+    async_to_sync(get_channel_layer().group_send)(
+        'ChessGame_%s' % instance.id,  # group name according to my own undocumented convention
+        {'type': 'g_model_deleted'}
+    )

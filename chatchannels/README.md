@@ -14,7 +14,7 @@ Django app for creating chat channels with:
 
 ## urls
 
-- ``request_channel``: Expects POST with ``{ is_public : bool }`` body. Creates a ChatChannel object
+- ``request_channel/``: Expects POST with ``{ is_public : bool }`` body. Creates a ChatChannel object
 and returns its id in response: ``{ id: number }``
 
 ## routing
@@ -37,8 +37,8 @@ format:
 - ``{ type: 'publicize', public: boolean }``: Sets the channel to public (`set===true`) or to private 
 (`set===false`). Only honored if issued by an admin. If set to false, all users not in 'allowed_participants'
 will be kicked
-- ``{ type: 'allow', username: string }`` adds a user to 'allowed_participants'. Only honored if issued by an
-admin (this is done automatically in case a user receives 'admin' status)
+- ``{ type: 'allow', username: string }`` adds a user to 'allowed_participants' (this is done automatically in case a user receives 'admin' status). Only honored if issued by an admin
+
 - ``{ type: 'disallow', username: string }`` removes a user from 'allowed_participants'. If the user is online,
 kicks him too. Does nothing if issued against an admin
 
