@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from chessgames.models import ChessGame
 import time
+from chessgames.chessengine import Game
 
 
 class GroupMsgs:
@@ -66,7 +67,7 @@ class ServerMsgs:
 
     @staticmethod
     def move(move, draw_requested):
-        return {'type': 'move', 'move': move, draw_requested: 'draw_requested'}
+        return {'type': 'move', 'move': move, 'draw_requested': draw_requested}
 
     @staticmethod
     def game_end(winner, out_of_time):
@@ -93,6 +94,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         self.is_first_player = None  # Whether this is the hosting player
         self.is_second_player = None  # Whether this is the opponent of the hosting player
         self.turn_id = None  # Unique id generated for every turn of the player
+        self.engine = None
 
     def group_send(self, dictionary):
         """
@@ -128,6 +130,11 @@ class ChessGameConsumer(JsonWebsocketConsumer):
 
         self.group_send(GroupMsgs.g_entered(username=self.username))
 
+        self.engine = Game.default_game()
+
+        for move in self.game_inst.history:
+            self.engine.make(move)
+
     def disconnect(self, close_code):
         # Leave room group
         if self.channel_group_name is None:
@@ -140,6 +147,32 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             self.channel_name
         )
 
+    def __move(self, move, request_draw):
+        if not self.myturn():
+            return
+        try:
+            self.engine.make(move)
+        except:
+            self.engine = Game.default_game()
+            for move in self.game_inst.history:
+                self.engine.make(move)
+            return
+        self.game_inst.history.append(move)
+        self.game_inst.save()
+        self.group_send(GroupMsgs.g_move(move, request_draw))
+        if self.engine.checkmate():
+            self.game_inst.end = time.time()
+            self.game_inst.win = 'white' if self.is_first_player else 'black'
+            self.game_inst.alive = False
+            self.game_inst.save()
+            self.group_send(GroupMsgs.g_game_end(self.game_inst.win, False))
+
+    def myturn(self):
+        if not self.is_first_player and not self.is_second_player:
+            return False
+        count = len(self.game_inst.history)%2
+        return (self.is_first_player and count == 0) or (self.is_second_player and count == 1)
+
     def receive_json(self, event, **kwargs):
         """
         Receives message directly from associated client
@@ -148,8 +181,13 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             msg_type = event['type']
         except KeyError:
             return
-        if msg_type == 'bla':
-            'ble'
+        if msg_type == 'move':
+            try:
+                move = event['move']
+                request_draw = event['request_draw']
+            except KeyError:
+                return
+            self.__move(move, request_draw)
         elif msg_type == 'bli':
             'blo'
 
@@ -173,3 +211,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         time_out = event["out_of_time"]
         win = event["winner"]
         self.send_json(ServerMsgs.game_end(win, time_out))
+
+    def g_move(self,event):
+        self.send_json(ServerMsgs.move(event['move'], event['draw_requested']))
+
