@@ -94,6 +94,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'webxadrez.wsgi.application'
 
+print(os.environ.get('REDIS_URL'))
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -110,8 +112,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ.get('DATABASE_NAME', 'the_database'),
-        'USER': os.environ.get('DATABASE_USER', 'databaseuser'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'P@ssw0rd'),
+        'USER': os.environ.get('DATABASE_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'incorreto17'),
         'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': os.environ.get('DATABASE_PORT', '5432')
     }

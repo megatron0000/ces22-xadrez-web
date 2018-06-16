@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from chessgames.models import ChessGame
+import time
 
 
 class GroupMsgs:
@@ -151,3 +152,24 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             'ble'
         elif msg_type == 'bli':
             'blo'
+
+    def g_model_deleted(self):
+        self.send_json(ServerMsgs.pending_timeout())
+
+    def g_play_timer_ended(self, event):
+        if self.turn_id != event["turn_id"]:
+            return
+        if self.is_first_player:
+            win = "black"
+        else:
+            win = "white"
+        self.game_inst.win = win
+        self.game_inst.end = time.time()
+        self.game_inst.alive = False
+        self.game_inst.save()
+        self.group_send(GroupMsgs.g_game_end(win, True))
+
+    def g_game_end(self, event):
+        time_out = event["out_of_time"]
+        win = event["winner"]
+        self.send_json(ServerMsgs.game_end(win, time_out))
