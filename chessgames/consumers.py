@@ -95,6 +95,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         self.is_second_player = None  # Whether this is the opponent of the hosting player
         self.turn_id = None  # Unique id generated for every turn of the player
         self.engine = None
+        self.accept_time = False
 
     def group_send(self, dictionary):
         """
@@ -150,6 +151,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
     def __move(self, move, request_draw):
         if not self.myturn():
             return
+        self.accept_time = False
         try:
             self.engine.make(move)
         except:
@@ -166,6 +168,35 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             self.game_inst.alive = False
             self.game_inst.save()
             self.group_send(GroupMsgs.g_game_end(self.game_inst.win, False))
+
+    def __draw_accept(self):
+        if not self.myturn():
+            return
+        if self.accept_time is not True:
+            return
+        self.game_inst.win = "draw"
+        self.game_inst.end = time.time()
+        self.game_inst.alive = False
+        self.game_inst.save()
+        self.group_send(GroupMsgs.g_game_end("draw", False))
+
+    def __status_prompt(self):
+        white =  self.game_inst.white.username
+        black_user = self.game_inst.black
+        black = None if black_user is None else black_user.username
+        if black_user is None:
+            turn = None
+        elif len(self.game_inst.history)%2 == 0:
+            turn = "white"
+        else:
+            turn = "black"
+        self.send_json(ServerMsgs.game_status({
+            "white": white,
+            "black": black,
+            "turn": turn,
+            "whoami": self.username,
+            "victory": self.game_inst.win
+        }))
 
     def myturn(self):
         if not self.is_first_player and not self.is_second_player:
@@ -188,8 +219,11 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             except KeyError:
                 return
             self.__move(move, request_draw)
-        elif msg_type == 'bli':
-            'blo'
+        elif msg_type == "draw_accept":
+            self.__draw_accept()
+        elif msg_type == "status_prompt":
+            self.__status_prompt()
+
 
     def g_model_deleted(self):
         self.send_json(ServerMsgs.pending_timeout())
@@ -214,4 +248,5 @@ class ChessGameConsumer(JsonWebsocketConsumer):
 
     def g_move(self,event):
         self.send_json(ServerMsgs.move(event['move'], event['draw_requested']))
-
+        if (self.myturn() and event["draw_requested"]) is True:
+            self.accept_time = True
