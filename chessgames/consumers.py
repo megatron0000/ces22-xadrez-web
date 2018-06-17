@@ -3,7 +3,13 @@ from channels.generic.websocket import JsonWebsocketConsumer
 from chessgames.models import ChessGame
 import time
 from chessgames.chessengine import Game
+from channels.layers import get_channel_layer
+from channels.consumer import async_to_sync
+from threading import Timer
 
+
+def win_by_timer(consumer_channel, move_count):
+    async_to_sync(get_channel_layer().send)(consumer_channel, GroupMsgs.g_play_timer_ended(move_count))
 
 class GroupMsgs:
     """
@@ -44,16 +50,13 @@ class GroupMsgs:
         return {'type': 'g_model_deleted'}
 
     @staticmethod
-    def g_play_timer_ended(consumer_channel, turn_id):
+    def g_play_timer_ended(move_count):
         """
         Emitted by a timer thread when 60 seconds elapse since the beggining of a player's
         turn. The consumer receiving the message can then forfeit the game if the player has
         not moved in time
-        :param consumer_channel: channel name of the consumer that originally started the timer (so
-        that the timer knows who to send information back to)
-        :param turn_id: Unique identifier of the turn the player was in when the timer started
         """
-        return {'type': 'g_play_timer_ended', 'turn_id': turn_id}
+        return {'type': 'g_play_timer_ended', 'move_count': move_count}
 
 
 class ServerMsgs:
@@ -168,6 +171,8 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             self.game_inst.alive = False
             self.game_inst.save()
             self.group_send(GroupMsgs.g_game_end(self.game_inst.win, False))
+        else:
+            Timer(60, win_by_timer, args=(len(self.game_inst.history),)).start()
 
     def __draw_accept(self):
         if not self.myturn():
@@ -229,7 +234,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         self.send_json(ServerMsgs.pending_timeout())
 
     def g_play_timer_ended(self, event):
-        if self.turn_id != event["turn_id"]:
+        if len(self.game_inst.history) != event["move_count"]:
             return
         if self.is_first_player:
             win = "black"
