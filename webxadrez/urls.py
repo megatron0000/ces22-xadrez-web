@@ -1,3 +1,5 @@
+from django.shortcuts import redirect
+
 """webxadrez URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -17,6 +19,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls import url
 
+def index(request):
+    return redirect('chessgames:play')
+
 urlpatterns = [
     path('accounts/', include('emailsignup.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
@@ -24,5 +29,6 @@ urlpatterns = [
     path('polls/', include('polls.urls')),
     path('gmailbox/', include('gmailbox.urls')),
     path('chatchannels/', include('chatchannels.urls')),
+    path('', index),
     path('chessgames/', include('chessgames.urls'))
 ]
