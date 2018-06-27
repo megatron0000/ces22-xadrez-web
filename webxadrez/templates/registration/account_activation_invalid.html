@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
+{% block lead %}
+
+<h1>Invalid link</h1>
+
+{% endblock %}
+
 {% block content %}
-  <p>The confirmation link was invalid, possibly because it has already been used.</p>
+  <p class="padded-content">The confirmation link was invalid, possibly because it has already been used.</p>
 {% endblock %}

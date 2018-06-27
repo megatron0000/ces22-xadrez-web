@@ -4,9 +4,10 @@ from django.urls import reverse
 from django.shortcuts import redirect, render
 from gmailbox.models import UserToken
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 
 
-def getflow(request):
+def __getflow(request):
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         settings.GMAIL_CLIENT_SECRET_PATH,
         scopes=['https://www.googleapis.com/auth/gmail.modify'])
@@ -17,10 +18,11 @@ def getflow(request):
     return flow
 
 
+@staff_member_required
 def set_account(request):
     # Use the client_secret.json file to identify the application requesting
     # authorization. The client ID (from that file) and access scopes are required.
-    flow = getflow(request)
+    flow = __getflow(request)
 
     # Generate URL for request to Google's OAuth 2.0 server.
     # Use kwargs to set optional request parameters.
@@ -35,7 +37,7 @@ def set_account(request):
 
 
 def oauth_redirect_internal(request):
-    flow = getflow(request)
+    flow = __getflow(request)
     # catch situations where, for example, user denied access
     try:
         flow.fetch_token(authorization_response=request.get_full_path())

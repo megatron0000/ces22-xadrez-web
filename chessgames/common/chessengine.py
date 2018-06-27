@@ -265,7 +265,10 @@ class Board(BoardLike):
         :param side: Do tipo `Side`
         :return: `Square`s ocupadas pelo lado `side`
         """
-        return self.__playersquares[side].keys()
+        # Explicitly convert to list. Using an iterator led to bug:
+        # I suspect doing and undoing moves in self.moves changed the order of the
+        # keys in the iterator midway
+        return list(self.__playersquares[side].keys())
 
     def attacked(self, square, side):
         """
@@ -1068,6 +1071,8 @@ class Game:
         return self.moves() == []
 
     def inflate(self, movestr):
+        if len(movestr) > 5:
+            raise ValueError('move string must be either 4 or 5 characters long')
         fromsq = Square(movestr[0:2])
         tosq = Square(movestr[2:4])
         side = self.__board[fromsq].side
@@ -1142,13 +1147,3 @@ class Game:
         :return: Representação interna do tabuleiro de jogo
         """
         return self.__board
-
-    def get_moves(self):
-        """
-
-        :return: Lista de todos os movimentos que o jogador da vez pode executar.
-        Cada movimento é uma instância de `Move`
-        """
-        legalmoves = []
-        for square in self.__board.get_playersquares(self.turn()):
-            legalmoves.append((square, self.moves(square)))

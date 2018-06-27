@@ -3,6 +3,7 @@ Attribution: Simple is Better Than Complex
 """
 
 from django.contrib.auth import login
+from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import render, redirect
@@ -74,11 +75,38 @@ def activate(request, uidb64, token):
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
+    context = {
+        'uidb64': uidb64,
+        'token': token
+    }
+
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.profile.email_confirmed = True
         user.save()
         login(request, user)
-        return render(request, 'registration/account_activation_done.html')
+        context['activation_status'] = 'complete'
+        return render(request, 'registration/account_activation_done.html', context=context)
     else:
-        return render(request, 'registration/account_activation_invalid.html')
+        context['activation_status'] = 'invalid'
+        return render(request, 'registration/account_activation_invalid.html', context=context)
+
+
+def profile(request):
+    return render(request, 'registration/profile.html')
+
+
+class EmailSignupPasswordResetConfirmView(PasswordResetConfirmView):
+
+    def get_context_data(self, **kwargs):
+        """
+        Augments context returned by superclass with true values of `uidb64`
+        and `token` so that django-sitetree can find this template's title.
+        It seems the app does not use 'reverse' since it relies on values
+        being present in the context of the template
+        """
+        context = super().get_context_data()
+        context['uidb64'] = 'OQ'
+        context['token'] = 'set-password'
+        return context
+    

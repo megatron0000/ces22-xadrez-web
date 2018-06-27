@@ -1,10 +1,274 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block style %}
+
+<link rel="stylesheet" href="{% static 'vendor/chessboard.css' %}">
+
+
+<style>
+  .col-with-padding {
+    box-sizing: border-box !important;
+    padding: 0.5rem !important;
+  }
+
+  .game-list-collapsable {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    justify-content: space-evenly;
+  }
+
+  .chessgame-card {
+    width: 14rem;
+    margin-top: 1rem;
+    /* override foundation */
+    flex-grow: 0 !important;
+  }
+
+  .chessgame-card ul {
+    /* override foundation */
+    margin-left: 0;
+  }
+</style>
+
+{% endblock %}
+
+{% block lead %}
+
+<h1 class="display-4">Play a game</h1>
+<p>Click on a pending game to play, or on a running game to watch (or even host your own)</p>
+
+{% endblock  %}
+
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12 col-with-padding">
+      <button onclick="host_your_own()" id="host_your_own_button" class="btn btn-dark">Host your own</button>
+    </div>
+    <div class="col-sm-12 col-with-padding">
+      <button class="btn btn-outline-dark" type="button" data-toggle="collapse" data-target="#pending_games_container">
+        <img class="webchess-openclose"> Pending games
+      </button>
+      <div class="collapse" id="pending_games_container">
+        <div class="game-list-collapsable">
+          {% for game in pending_games %}
+          <div class="card chessgame-card">
+            <div class="card-header">
+              <div style="display:flex; justify-content: center;">
+                <div id="chessgame_{{game.session_id}}" style="width: 12rem;"></div>
+              </div>
+            </div>
+
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">Offerer: {{ game.white }}</li>
+            </ul>
+
+            <div class="card-body">
+              <button onclick="play_game({{game.session_id}})" class="btn btn-secondary btn-block btn-chessgame-play">
+                Play
+              </button>
+            </div>
+
+            <div id="chessgame_{{game.session_id}}_alert_container" class="alert alert-dismissible fade" role="alert">
+              <strong id="chessgame_{{game.session_id}}_alert_text"></strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not pending_games %}
+          <div style="display: flex; justify-content: center">
+            <p>No one is offering games.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-12 col-with-padding">
+      <button class="btn btn-outline-dark" type="button" data-toggle="collapse" data-target="#running_games_container">
+        <img class="webchess-openclose"> Running games
+      </button>
+
+      <div class="collapse" id="running_games_container">
+        <div class="game-list-collapsable">
+          {% for game in running_games %}
+          <div class="card chessgame-card" style="width: 14rem;">
+            <div class="card-header">
+              <div style="display:flex; justify-content: center;">
+                <div onload="create_board_repr('chessgame_{{game.session_id}}', {{game.history | safe}})"
+                     id="chessgame_{{game.session_id}}" style="width: 12rem;"></div>
+              </div>
+            </div>
+
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">White: {{game.white}}</li>
+              <li class="list-group-item">Black: {{game.black}}</li>
+            </ul>
+
+            <div class="card-body">
+              <a href="{% url 'chessgames:play_game_id' game_id=game.session_id %}" class="btn btn-secondary btn-block">Watch</a>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not running_games %}
+          <div style="display: flex; justify-content: center;">
+            <p>No game is being played.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+
+<script src="{% static 'vendor/chessboard.js' %}"></script>
+<script src="{% static 'vendor/chess.min.js' %}"></script>
+
+<script>
+  $().ready(function () {
+    var right_chevron = "{% static 'vendor/open-iconic/png/chevron-right-2x.png'  %}";
+    var bottom_chevron = "{% static 'vendor/open-iconic/png/chevron-bottom-2x.png'  %}";
+
+    var openclose_selector = '.webchess-openclose';
+    var openclose_imgs = $(openclose_selector);
+
+    openclose_imgs.attr('src', right_chevron);
+
+    openclose_imgs.parent().click(function () {
+      if ($(this).children(openclose_selector).attr('src') === right_chevron)
+        $(this).children(openclose_selector).attr('src', bottom_chevron);
+      else
+        $(this).children(openclose_selector).attr('src', right_chevron);
+    });
+
+  });
+
+  function InteractionButtons(selector) {
+    this.els = $(selector);
+    this.disabled = false;
+  }
+  InteractionButtons.prototype.is_disabled = function () {
+    return this.disabled;
+  };
+  InteractionButtons.prototype.toggle =  function () {
+    if (this.is_disabled()) {
+      this.els.attr('disabled', null);
+      this.disabled = false;
+    } else {
+      this.els.attr('disabled', true);
+      this.disabled = true;
+    }
+  };
+
+  var play_buttons = new InteractionButtons('.btn-chessgame-play');
+
+  var host_button = new InteractionButtons('#host_your_own_button');
+
+  var alerts = {
+    __last_class: null,
+    __msg: function (game_id, css_class, msg) {
+      var container = $('#chessgame_' + game_id + '_alert_container');
+      var text = $('#chessgame_' + game_id + '_alert_text');
+      if (this.__last_class) {
+        container.removeClass(this.__last_class);
+      }
+      container.addClass(css_class);
+      this.__last_class = css_class;
+      container.addClass('show');
+      text.text(msg);
+    },
+    error: function (game_id, error_msg) {
+      this.__msg(game_id, 'alert-danger', error_msg);
+    },
+    info: function (game_id, info_msg) {
+      this.__msg(game_id, 'alert-primary', info_msg);
+    },
+    dismiss: function (game_id) {
+      $('#chessgame_' + game_id + '_alert_container').removeClass('show');
+    }
+  };
+
+  function play_game(game_id) {
+    if (play_buttons.is_disabled())
+      return;
+
+    play_buttons.toggle();
+
+    $.post("{% url 'chessgames:play_game_id' game_id='__slot__' %}".replace('__slot__', game_id)).done(function (data) {
+
+      play_buttons.toggle();
+
+      if (data.game_id !== game_id) {
+        // console.log('fail');
+        alerts.error(game_id, 'Something went wrong. Someone may have entered the game before you, or you may have' +
+          ' tried to play against yourself');
+        return;
+      }
+
+      // console.log('done');
+      alerts.info(game_id, 'Done ! Redirecting you to play arena...');
+      window.location.href = "{% url 'chessgames:play_game_id' game_id='__slot__' %}".replace('__slot__', game_id);
+
+    }).fail(function() {
+      play_buttons.toggle();
+
+      alerts.error(game_id, 'The server is down, or underwent an internal error. You can try again.')
+    });
+  }
+
+  function create_board_repr(container_id, moves) {
+    var engine = new Chess();
+    for (var move of moves) {
+      console.log(move);
+      var dict = {};
+      dict.from = move.substr(0, 2);
+      dict.to = move.substr(2, 2);
+      if (move.length === 5) {
+        dict.promotion = move[4].toLowerCase();
+      }
+      engine.move(dict);
+    }
+
+    ChessBoard(container_id, {
+      position: engine.fen(),
+      showNotation: false,
+      pieceTheme: "{% static 'vendor/chesspieces/wikipedia/' %}{piece}.png"
+    });
+
+  }
+
+  function host_your_own() {
+    host_button.toggle();
+    $.post("{% url 'chessgames:host_game' %}").done(function(data) {
+      if (! data.game_id)
+        return;
+      window.location.href = "{% url 'chessgames:play_game_id' game_id='__slot__' %}".replace('__slot__', data.game_id);
+    }).fail(function () {
+      host_button.toggle();
+    });
+  }
+</script>
+
+{% for game in pending_games %}
+<script>
+  create_board_repr('chessgame_{{game.session_id}}', {{game.history | safe}});
+</script>
+{% endfor %}
+
+{% for game in running_games %}
+<script>
+  create_board_repr('chessgame_{{game.session_id}}', {{game.history | safe}});
+  console.log('created', {{game.history | safe}});
+</script>
+{% endfor %}
+
+
+{% endblock %}

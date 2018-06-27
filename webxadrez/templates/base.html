@@ -1,35 +1,74 @@
 {% load static %}
+{% load sitetree %}
 <!doctype html>
 <html class="no-js" lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webxadrez</title>
-    <link rel="stylesheet" href="{% static 'vendor/foundation.css' %}">
-    <link rel="stylesheet" href="{% static 'base.css' %}">
-  </head>
-  <body>
-    <div class="top-bar">
-      <div class="top-bar-left">
-        <ul class="menu">
-          <li class="menu-text">Webxadrez</li>
-        </ul>
-      </div>
-      <div class="top-bar-right">
-        <ul class="menu">
-          <li class="active"><a href="#">One</a></li>
-          <li><a href="#">Two</a></li>
-          <li><a href="{% url 'login' %}">Login</a></li>
-          <li><a href="{% url 'logout' %}">Logout</a></li>
-        </ul>
-      </div>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% sitetree_page_title from "root_tree" %}</title>
+  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+
+  <link rel="stylesheet" href="{% static 'base.css' %}">
+  <link rel="stylesheet" href="{% static 'sticky-footer.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/breadcrumbs.css' %}">
+  {% include 'foundation.css.html' %}
+  {% include 'bootstrap.css.html' %}
+  {% block style %} {% endblock %}
+
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Webchess</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    {% sitetree_menu from "root_tree" include "trunk" template "sitetree/menu_bootstrap4.html" %}
+  </div>
+</nav>
+
+{% if user.is_authenticated %}
+<nav class="navbar  navbar-username">
+  <span class="navbar-text">Logged in as {{user.username}}</span>
+</nav>
+{% endif %}
+
+<div class="jumbotron jumbotron-fluid" id="remove_lead_if_not_inherited">
+    <div class="container">
+      {% block lead %} {% endblock %}
+      {% sitetree_breadcrumbs from "root_tree" template "sitetree/breadcrumbs_bootstrap.html" %}
     </div>
-    <div id="base-content">
-        {% block content %} {% endblock %}
-    </div>
-    <script src="{% static 'vendor/jquery.js' %}"></script>
-    <script src="{% static 'vendor/what-input.js' %}"></script>
-    <script src="{% static 'vendor/foundation.js' %}"></script>
-  </body>
+</div>
+
+<div>
+  {% block content %} {% endblock %}
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <span class="text-muted">Webchess</span>
+  </div>
+</footer>
+
+<script src="{% static 'vendor/jquery.js' %}"></script>
+<script src="{% static 'vendor/what-input.js' %}"></script>
+<script src="{% static 'vendor/popper.min.js' %}"></script>
+
+<!-- <script>
+  $().ready(function() {
+    if (! $('#remove_lead_if_not_inherited > .container').children().length) {
+      $('#remove_lead_if_not_inherited').remove();
+    }
+  });
+</script> -->
+
+{% include 'bootstrap.js.html' %}
+{% include 'foundation.js.html' %}
+{% include 'ajax-csrf.html' %}
+{% block script %} {% endblock %}
+
+</body>
 </html>

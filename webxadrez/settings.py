@@ -19,12 +19,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 's2@garpy5!f@ye#*!2+0y#ruftsy#hjn(29qkp(4j19*os$iop')
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', 's2@garpy5!f@ye#*!2+0y#ruftsy#hjn(29qkp(4j19*os$iop')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(':') + ['localhost']
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS', 'localhost').split(':') + ['localhost']
 
 # Application definition
 
@@ -34,6 +36,8 @@ EMAIL_BACKEND = 'gmailbox.backend.GmailBackend'
 GMAIL_CLIENT_SECRET_PATH = os.environ.get('GMAIL_CLIENT_SECRET_PATH')
 
 INSTALLED_APPS = [
+    # project on top to use its templates over the others
+    'webxadrez',
     'django.contrib.auth',
     'django.contrib.admin',
     'django.contrib.contenttypes',
@@ -45,9 +49,9 @@ INSTALLED_APPS = [
     'channels',
     'gmailbox',
     'emailsignup',
-    'webxadrez',
     'chatchannels',
     'chessgames',
+    'sitetree',
     'vendor'
 ]
 
@@ -94,8 +98,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'webxadrez.wsgi.application'
 
-print(os.environ.get('REDIS_URL'))
-
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -112,8 +114,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ.get('DATABASE_NAME', 'the_database'),
-        'USER': os.environ.get('DATABASE_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'incorreto17'),
+        'USER': os.environ.get('DATABASE_USER', 'databaseuser'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'P@ssw0rd'),
         'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': os.environ.get('DATABASE_PORT', '5432')
     }

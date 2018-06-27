@@ -34,24 +34,7 @@
         <input type="button" value="Switch" id="channel-public-submit">
     </body>
     <script src="{% static 'vendor/jquery.js' %}"></script>
-    {% csrf_token %}
-    <script type="text/javascript">
-    // using jQuery
-    let csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
-    </script>
-    <script>
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
-        $.ajaxSetup({
-            beforeSend: function(xhr, settings) {
-                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                }
-            }
-        });
-    </script>
+    {% include 'ajax-csrf.html' %}
     <script>
     // document.querySelector('#room-name-input').focus();
     let create_channel_endpoint = '{{create_channel_endpoint}}';

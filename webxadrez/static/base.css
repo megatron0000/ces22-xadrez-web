@@ -1,5 +1,50 @@
-#base-content {
+.padded-content {
     margin-top: 0.9rem;
     margin-left: 0.9rem;
-    mergin-right: 0.9rem;
+    margin-right: 0.9rem;
+}
+
+.navbar-dark .dropdown-menu {
+    background-color: #343a40 !important;
+    color: #fff !important;
+    border: 0px !important;
+}
+
+.navbar-dark .dropdown-item {
+    color: rgba(255, 255, 255, .5) !important;
+    background-color: #343a40 !important;
+}
+
+.navbar-dark .dropdown-item:hover {
+    color: rgba(255, 255, 255, .75) !important;
+    background-color: #343a40 !important;
+}
+
+.navbar-dark .dropdown-item.active {
+    color: #fff !important;
+}
+
+/**
+* Lead paragraph effect
+*/
+
+.jumbotron-fluid p {
+    font-size: 1.25rem;
+    font-weight: 300;
+}
+
+.jumbotron-fluid h1 {
+    font-size: 3.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+
+/**
+* Display username in navbar
+*/
+
+.navbar-username {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background-color: rgb(142, 147, 151);
 }

@@ -17,7 +17,7 @@ def index(request):
 
 def create_channel(admins, is_public):
     """Internal use. For creating channels not necessarily from an HttpRequest"""
-    channel = ChatChannel(is_public=is_public, history=[])
+    channel = ChatChannel(is_public=is_public)
     channel.save()
     channel.admins.add(*admins)
     # Consistency: admins are allowed_participants

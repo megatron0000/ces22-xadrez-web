@@ -1,11 +1,15 @@
 {% extends 'base.html' %}
 
+{% block lead %}
+
+<h1>Logged out</h1>
+
+{% endblock %}
+
 {% block content %}
 
-<div class="grid-container">
-    <h1>You have logged out</h1>
-
-    <a href="{% url 'login' %}">Log in again ?</a>
+<div class="grid-container padded-content">
+  <a href="{% url 'login' %}">Log in again ?</a>
 </div>
 
 {% endblock %}

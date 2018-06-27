@@ -31,16 +31,21 @@ format:
 ### from client to server
 
 - ``{ type: 'add_admin', username: string }``: Adds an admin named 'username' to channel 
-(adds to 'allowed_participants' consequentially). Honored only if issued by an admin
+(adds to 'allowed_participants' consequently). Honored only if issued by an admin
+
 - ``{ type: 'message', message: string }``: Sends a message to the channel
  or is not an admin currently
-- ``{ type: 'publicize', public: boolean }``: Sets the channel to public (`set===true`) or to private 
-(`set===false`). Only honored if issued by an admin. If set to false, all users not in 'allowed_participants'
+
+- ``{ type: 'publicize', public: boolean }``: Sets the channel to public (`public===true`) or to private
+(`public===false`). Only honored if issued by an admin. If set to false, all users not in 'allowed_participants'
 will be kicked
+
 - ``{ type: 'allow', username: string }`` adds a user to 'allowed_participants' (this is done automatically in case a user receives 'admin' status). Only honored if issued by an admin
 
 - ``{ type: 'disallow', username: string }`` removes a user from 'allowed_participants'. If the user is online,
 kicks him too. Does nothing if issued against an admin
+
+- ``{ type: 'latest', offset: number, limit: number }`` issues response containing the `limit` latest messages when `offset` messages are disconsidered.
 
 #### removed
 
@@ -51,10 +56,21 @@ does not alter 'allowed_participants' list). Does nothing if 'username' does not
 
 ### from server to client
 
-- ``{ type: 'message', message: string }``: When a message is received from upstream (sent by the client itself
-or other connected client)
+- ``{ type: 'message', message: Message }``: When a message is received from upstream (sent by the client itself
+or other connected client). See below for `Message` interface
 
 - ``{ type: 'entered', username: string }``: When someone enters the channel
 
 - ``{ type: 'exit', username: string }``: When someone exits the channel
 
+- ``{ type: 'i_am_here', username: string }``: When a new consumer is opened, all other active consumers send this message to it (this way, the new client may know all other connected clients)
+
+- ``{ type: 'latest', offset: number, limit: number, messages: Message[] }``: When a client previously issued a `latest` request. `offset` and `limit` are echoes from the client, and `messages` are the messages the client requested.
+
+````ts
+interface Message {
+    content: string // text from the author
+    author: string // username of author
+    timestamp: string // iso format string describing time of creation
+}
+````

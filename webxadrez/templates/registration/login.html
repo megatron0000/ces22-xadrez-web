@@ -1,60 +1,76 @@
 {% extends 'base.html' %}
 
+{% block style %}
+
+{% include 'foundation.css.html' %}
+{% include 'bootstrap.css.html' %}
+
+{% endblock %}
+
+{% block lead %}
+
+<h1>Login</h1>
+
+{% endblock %}
+
 {% block content %}
 
 <div class="grid-container">
-    {% if form.errors %}
-    <div class="callout alert" data-closable>
-        <p>Your username and password did not match. Please try again</p>
-        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    {% endif %}
+  <!-- Style for only parent element -->
 
-    {% if next %}
-    {% if user.is_authenticated %}
-    <div class="callout alert" data-closable>
-        <p>Your account doesn't have access to this page. To proceed,
-            please login with an account that has access.</p>
-        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    {% else %}
-    <div class="callout alert" data-closable>
-        <p>Please login to see this page</p>
-        <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    {% endif %}
-    {% endif %}
+  {% if form.errors %}
+  <div class="callout alert" data-closable>
+    <p>Your username and password did not match. Please try again</p>
+    <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {% endif %}
 
-</div>
-
-{# Assumes you setup the password_reset view in your URLconf #}
-<!-- <p><a href="{% url 'password_reset' %}">Lost password?</a></p> -->
+  {% if next %}
+  {% if user.is_authenticated %}
+  <div class="callout alert" data-closable>
+    <p>Your account doesn't have access to this page. To proceed,
+      please login with an account that has access.</p>
+    <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {% else %}
+  <div class="callout alert" data-closable>
+    <p>Please login to see this page</p>
+    <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {% endif %}
+  {% endif %}
 
 
-<form method="post" action="{% url 'login' %}">
+  {# Assumes you setup the password_reset view in your URLconf #}
+  <!-- <p><a href="{% url 'password_reset' %}">Lost password?</a></p> -->
+
+
+  <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
     <div class="grid-container">
-        <div class="grid-x grid-padding-x">
-            <div class="medium-6 cell">
-                {{ form.username.label_tag }}
-                {{ form.username }}
-            </div>
-            <div class="medium-6 cell">
-                {{ form.password.label_tag }}
-                {{ form.password }}
-                <small><a href="{% url 'password_reset' %}">Forgot your password ?</a></small>
-            </div>
-            <div class="medium-12 cell"><input type="submit" class="button" value="login"/></div>
-            <input type="hidden" name="next" value="{{ next }}"/>
+      <div class="grid-x grid-padding-x">
+        <div class="medium-6 cell">
+          {{ form.username.label_tag }}
+          {{ form.username }}
         </div>
+        <div class="medium-6 cell">
+          {{ form.password.label_tag }}
+          {{ form.password }}
+          <small><a href="{% url 'password_reset' %}">Forgot your password ?</a></small>
+        </div>
+        <div class="medium-12 cell"><input type="submit" class="button" value="login"/></div>
+        <input type="hidden" name="next" value="{{ next }}"/>
+      </div>
     </div>
-</form>
+  </form>
+
+</div>
 
 
 {% endblock %}

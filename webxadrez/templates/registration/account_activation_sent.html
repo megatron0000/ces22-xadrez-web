@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 
+{% block lead %}
+
+<h1>Email sent</h1>
+
+{% endblock %}
+
 {% block content %}
-<p>An email has been sent to you. Access it to confirm your registration</p>
-<p>
+
+<div class="padded-content">
+  <p>An email has been sent to you. Access it to confirm your registration</p>
+  <p>
     <a href="{% url 'emailsignup:resend_activation_email' %}">
-        Did not receive the email ?
+      Did not receive the email ?
     </a>
-</p>
+  </p>
+</div>
+
 {% endblock %}

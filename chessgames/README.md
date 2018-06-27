@@ -6,7 +6,7 @@ Django app for playing chess games online.
 
 All urls require authentication.
 
-- ``POST host_game/``: Creates a GameSession object and returns the ids of its associated ChatChannel and ChessGame. An opponent has 60 seconds to connect before the created objects are deleted for staying too much time in pending state.
+- ``POST host_game/``: Creates a GameSession object and returns its id. An opponent has 60 seconds to connect before the created objects are deleted for staying too much time in pending state.
 
 - ``play/``: Renders template `chessgames/list.html` (inteded to allow a user to host his own game or select an offered one to play)
 
@@ -43,12 +43,14 @@ a draw from the opponent.
 
 - ``{ type: 'game_start', opponent: string }``: Emitted if the game was in "pending" state (there was only one player) and a second player appears to be the opponent
 
+
 ````ts
 interface GameStatus {
 	white: string // username of the white player
 	black: string | null, // null if no opponent appeared to take the role of black player yet
 	whoami: string, // username of requesting user
 	turn: 'white' | 'black' | null, // null if the game hasn't started or has ended
-	victory: 'white' | 'black' | 'draw' | null // null if the game hasn't started
+	victory: 'white' | 'black' | 'draw' | null // null if the game hasn't started,
+	moves: string[] // list of moves since game start. May be empty
 }
 ````

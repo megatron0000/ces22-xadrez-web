@@ -1,62 +1,12 @@
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import JsonWebsocketConsumer
-from chessgames.models import ChessGame
-import time
-from chessgames.chessengine import Game
-from channels.layers import get_channel_layer
+from datetime import datetime
+
 from channels.consumer import async_to_sync
-from threading import Timer
+from channels.generic.websocket import JsonWebsocketConsumer
 
-
-def win_by_timer(consumer_channel, move_count):
-    async_to_sync(get_channel_layer().send)(consumer_channel, GroupMsgs.g_play_timer_ended(move_count))
-
-class GroupMsgs:
-    """
-    Messages exchanged via channel layer (intra-server)
-    """
-
-    @staticmethod
-    def g_entered(username):
-        return {'type': 'g_entered', 'username': username}
-
-    @staticmethod
-    def g_exited(username):
-        return {'type': 'g_exited', 'username': username}
-
-    @staticmethod
-    def g_move(move, request_draw):
-        """
-        :param move: string defining move
-        :param request_draw: boolean indicating whether user requested draw
-        """
-        return {'type': 'g_move', 'move': move, 'request_draw': request_draw}
-
-    @staticmethod
-    def g_game_end(winner, out_of_time):
-        """
-        :param winner: 'white' or 'black' or 'draw'
-        :param out_of_time: boolean. True if game ended because a player
-        did not move in time during his turn
-        """
-        return {'type': 'g_game_end', 'winner': winner, 'out_of_time': out_of_time}
-
-    @staticmethod
-    def g_model_deleted():
-        """
-        Emitted when the ChessGame record corresponding to this game is deleted (for any reason
-        whatsoever)
-        """
-        return {'type': 'g_model_deleted'}
-
-    @staticmethod
-    def g_play_timer_ended(move_count):
-        """
-        Emitted by a timer thread when 60 seconds elapse since the beggining of a player's
-        turn. The consumer receiving the message can then forfeit the game if the player has
-        not moved in time
-        """
-        return {'type': 'g_play_timer_ended', 'move_count': move_count}
+from chessgames.common.chessengine import Game
+from chessgames.common.group_msgs import GroupMsgs
+from chessgames.common.move_timer import run_timer
+from chessgames.models import ChessGame
 
 
 class ServerMsgs:
@@ -80,6 +30,13 @@ class ServerMsgs:
     def game_status(status):
         return {'type': 'game_status', 'status': status}
 
+    @staticmethod
+    def game_start(opponent):
+        """
+        :param opponent: The opponent player (username) that has just entered the game
+        """
+        return {'type': 'game_start', 'opponent': opponent}
+
 
 class ChessGameConsumer(JsonWebsocketConsumer):
     """
@@ -96,9 +53,8 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         self.sync_group_send = None  # Internal helper. Use self.group_send instead
         self.is_first_player = None  # Whether this is the hosting player
         self.is_second_player = None  # Whether this is the opponent of the hosting player
-        self.turn_id = None  # Unique id generated for every turn of the player
         self.engine = None
-        self.accept_time = False
+        self.accept_draw_validity = False
 
     def group_send(self, dictionary):
         """
@@ -132,10 +88,10 @@ class ChessGameConsumer(JsonWebsocketConsumer):
 
         self.accept()
 
-        self.group_send(GroupMsgs.g_entered(username=self.username))
+        self.reset_engine()
 
+    def reset_engine(self):
         self.engine = Game.default_game()
-
         for move in self.game_inst.history:
             self.engine.make(move)
 
@@ -143,8 +99,6 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         # Leave room group
         if self.channel_group_name is None:
             return
-
-        self.group_send(GroupMsgs.g_exited(username=self.username))
 
         async_to_sync(self.channel_layer.group_discard)(
             self.channel_group_name,
@@ -154,44 +108,58 @@ class ChessGameConsumer(JsonWebsocketConsumer):
     def __move(self, move, request_draw):
         if not self.myturn():
             return
-        self.accept_time = False
+
+        # I moved, which means I have not accepted my opponent's draw
+        # request, if any
+        self.accept_draw_validity = False
+
+        # Validate and execute
         try:
             self.engine.make(move)
         except:
-            self.engine = Game.default_game()
-            for move in self.game_inst.history:
-                self.engine.make(move)
             return
+
         self.game_inst.history.append(move)
         self.game_inst.save()
+
+        me = 'white' if self.is_first_player else 'black'
+
         self.group_send(GroupMsgs.g_move(move, request_draw))
+
         if self.engine.checkmate():
-            self.game_inst.end = time.time()
-            self.game_inst.win = 'white' if self.is_first_player else 'black'
+            self.game_inst.end = datetime.now()
+            self.game_inst.win = me
             self.game_inst.alive = False
             self.game_inst.save()
-            self.group_send(GroupMsgs.g_game_end(self.game_inst.win, False))
+            self.group_send(GroupMsgs.g_game_end(winner=me, out_of_time=False))
+        # Forced draw
+        elif self.engine.stalemate():
+            self.game_inst.win = "draw"
+            self.game_inst.end = datetime.now()
+            self.game_inst.alive = False
+            self.game_inst.save()
+            self.group_send(GroupMsgs.g_game_end(winner="draw", out_of_time=False))
         else:
-            Timer(60, win_by_timer, args=(len(self.game_inst.history),)).start()
+            run_timer(self.game_inst.id, move_count=len(self.game_inst.history), winning_player=me)
 
     def __draw_accept(self):
         if not self.myturn():
             return
-        if self.accept_time is not True:
+        if self.accept_draw_validity is not True:
             return
         self.game_inst.win = "draw"
-        self.game_inst.end = time.time()
+        self.game_inst.end = datetime.now()
         self.game_inst.alive = False
         self.game_inst.save()
-        self.group_send(GroupMsgs.g_game_end("draw", False))
+        self.group_send(GroupMsgs.g_game_end(winner="draw", out_of_time=False))
 
     def __status_prompt(self):
-        white =  self.game_inst.white.username
+        white = self.game_inst.white.username
         black_user = self.game_inst.black
         black = None if black_user is None else black_user.username
-        if black_user is None:
+        if black_user is None or self.game_inst.end is not None:
             turn = None
-        elif len(self.game_inst.history)%2 == 0:
+        elif len(self.game_inst.history) % 2 == 0:
             turn = "white"
         else:
             turn = "black"
@@ -200,13 +168,20 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             "black": black,
             "turn": turn,
             "whoami": self.username,
-            "victory": self.game_inst.win
+            "victory": self.game_inst.win,
+            "moves": self.game_inst.history
         }))
 
     def myturn(self):
+        """
+        Helper to determine if I am a player and it is now my turn (and if game is not over)
+        :return: True if it is my turn. False otherwise
+        """
+        if self.game_inst.end is not None:
+            return False
         if not self.is_first_player and not self.is_second_player:
             return False
-        count = len(self.game_inst.history)%2
+        count = len(self.game_inst.history) % 2
         return (self.is_first_player and count == 0) or (self.is_second_player and count == 1)
 
     def receive_json(self, event, **kwargs):
@@ -217,6 +192,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             msg_type = event['type']
         except KeyError:
             return
+
         if msg_type == 'move':
             try:
                 move = event['move']
@@ -229,29 +205,29 @@ class ChessGameConsumer(JsonWebsocketConsumer):
         elif msg_type == "status_prompt":
             self.__status_prompt()
 
-
-    def g_model_deleted(self):
+    def g_model_deleted(self, event):
         self.send_json(ServerMsgs.pending_timeout())
 
-    def g_play_timer_ended(self, event):
-        if len(self.game_inst.history) != event["move_count"]:
-            return
-        if self.is_first_player:
-            win = "black"
-        else:
-            win = "white"
-        self.game_inst.win = win
-        self.game_inst.end = time.time()
-        self.game_inst.alive = False
-        self.game_inst.save()
-        self.group_send(GroupMsgs.g_game_end(win, True))
-
     def g_game_end(self, event):
-        time_out = event["out_of_time"]
-        win = event["winner"]
-        self.send_json(ServerMsgs.game_end(win, time_out))
+        self.send_json(ServerMsgs.game_end(event['winner'], event['out_of_time']))
 
-    def g_move(self,event):
+    def g_move(self, event):
         self.send_json(ServerMsgs.move(event['move'], event['draw_requested']))
-        if (self.myturn() and event["draw_requested"]) is True:
-            self.accept_time = True
+
+        if self.myturn() and event["draw_requested"]:
+            self.accept_draw_validity = True
+
+    def g_game_start(self, event):
+        self.send_json(ServerMsgs.game_start(event['opponent']))
+
+    def g_model_changed(self, event):
+        """
+        Only synchronizes moves
+        """
+        oldmoves_length = len(self.game_inst.history)
+
+        self.game_inst.refresh_from_db()
+
+        while oldmoves_length < len(self.game_inst.history):
+            self.engine.make(self.game_inst.history[oldmoves_length])
+            oldmoves_length += 1
