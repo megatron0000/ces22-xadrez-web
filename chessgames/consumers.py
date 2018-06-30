@@ -124,13 +124,13 @@ class ChessGameConsumer(JsonWebsocketConsumer):
 
         me = 'white' if self.is_first_player else 'black'
 
-        self.group_send(GroupMsgs.g_move(move, request_draw))
-
         if self.engine.checkmate():
             self.game_inst.end = datetime.now()
             self.game_inst.win = me
             self.game_inst.alive = False
             self.game_inst.save()
+            # Cannot request draw if the move checkmates the opponent
+            self.group_send(GroupMsgs.g_move(move=move, draw_requested=False))
             self.group_send(GroupMsgs.g_game_end(winner=me, out_of_time=False))
         # Forced draw
         elif self.engine.stalemate():
@@ -138,8 +138,11 @@ class ChessGameConsumer(JsonWebsocketConsumer):
             self.game_inst.end = datetime.now()
             self.game_inst.alive = False
             self.game_inst.save()
+            # Cannot request draw because draw is enforced anyway
+            self.group_send(GroupMsgs.g_move(move=move, draw_requested=False))
             self.group_send(GroupMsgs.g_game_end(winner="draw", out_of_time=False))
         else:
+            self.group_send(GroupMsgs.g_move(move=move, draw_requested=request_draw))
             run_timer(self.game_inst.id, move_count=len(self.game_inst.history), winning_player=me)
 
     def __draw_accept(self):
@@ -214,6 +217,7 @@ class ChessGameConsumer(JsonWebsocketConsumer):
     def g_move(self, event):
         self.send_json(ServerMsgs.move(event['move'], event['draw_requested']))
 
+        # If opponent requested draw (now is my turn), I can accept the request
         if self.myturn() and event["draw_requested"]:
             self.accept_draw_validity = True
 
