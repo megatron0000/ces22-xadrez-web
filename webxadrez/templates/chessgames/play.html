@@ -1,472 +1,510 @@
-{% extends 'base.html' %} {% load static %} {% block style %}
+{% load static %}
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
 
-<link rel="stylesheet" href="{% static 'vendor/chessboard.css' %}">
-<link rel="stylesheet" href="{% static 'vendor/bootstrap-toggle.css' %}">
-<link rel="stylesheet" href="{% static 'vendor/jquery-ui.min.css' %}">
-<link rel="stylesheet" href="{% static 'chatchannels/chat-ui.css' %}">
-<link rel="stylesheet" href="{% static 'vendor/loading-element.css' %}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
 
-<style>
-  .info-pane {
-    border: 1px solid lightgray;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    border-top-right-radius: 10px;
-    margin: 5px;
-  }
+  <link rel="stylesheet" href="{% static 'base.css' %}">
+  {% include 'foundation.css.html' %}
+  {% include 'bootstrap.css.html' %}
 
-  .pane-title {
-    background-color: lightgray;
-    display: inline-block;
-    border-bottom-right-radius: 10px;
-    padding: 10px;
-  }
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-toggle.css' %}">
+  <!-- <link rel="stylesheet" href="{% static 'vendor/jquery-ui.min.css' %}"> -->
+  <link rel="stylesheet" href="{% static 'chatchannels/chat-ui.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/loading-element.css' %}">
 
-  .pane-body {
-    padding: 10px;
-  }
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
 
-  .full-pane-x {
-    margin-right: -10px !important;
-    margin-left: -10px !important;
-  }
+    .pane-title {
+      background-color: lightgray;
+      display: block;
+      padding: 10px;
+    }
 
-  .full-pane-y {
-    margin-bottom: -10px !important;
-  }
 
-  .ui-sortable-placeholder {
-    width: 100%;
-    height: 2rem;
-    background-color: yellowgreen;
-  }
+    .pane-body {
+      padding: 10px;
+    }
 
-  ul {
-    list-style-type: none;
-    margin: 0 !important;
-  }
+    .full-pane-x {
+      margin-right: -10px !important;
+      margin-left: -10px !important;
+    }
 
-  #game_board {
-    margin: auto;
-  }
-</style>
+    .full-pane-y {
+      margin-bottom: -10px !important;
+    }
 
-{% endblock %} {% block lead %}
+    .ui-sortable-placeholder {
+      width: 100%;
+      height: 2rem;
+      background-color: yellowgreen;
+    }
 
-<h1>Playing</h1>
+    ul {
+      list-style-type: none;
+      margin: 0 !important;
+    }
 
-{% endblock %} {% block content %}
+    #game_board {
+      margin: auto;
+    }
 
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-12 col-md-6 col-with-padding">
-      <ul class="sortable">
-        <li class="info-pane">
-          <div class="pane-title">Game status</div>
-          <div class="pane-body" id="status_area"></div>
-        </li>
-        <li class="info-pane">
-          <div class="pane-title">Game board</div>
-          <div class="pane-body">
-            <div id="game_board" style="width: 500px; height: 375px; visibility: hidden;"></div>
-            <form style="margin-top: 1rem">
-              <div>
-                <input data-toggle="toggle" data-on="3D" data-off="2D" type="checkbox" id="chessgame_dimension">
-              </div>
-            </form>
-          </div>
-        </li>
-        <li class="info-pane">
+    #game-menu {
+      transition: all 0.25s ease-in-out;
+    }
+  </style>
 
-          <span class="pane-title">Move Options</span>
-          <div class="pane-body">
 
-            <form>
-              <div class="form-group">
-                <label for="promotion_select_div">Promote to</label>
-                <div style="display: block" class="btn-group btn-group-toggle" id="promotion_select_div" data-toggle="buttons">
-                  <label class="btn btn-secondary active">
-                    <input checked type="radio" name="promotion_options" value="Q">
-                    <img src="{% static 'vendor/chesspieces/wikipedia/bQ.png' %}" width="35rem" alt="Queen">
-                  </label>
-                  <label class="btn btn-secondary">
-                    <input type="radio" name="promotion_options" value="N">
-                    <img src="{% static 'vendor/chesspieces/wikipedia/bN.png' %}" width="35rem" alt="Knight">
-                  </label>
-                  <label class="btn btn-secondary">
-                    <input type="radio" name="promotion_options" value="B">
-                    <img src="{% static 'vendor/chesspieces/wikipedia/bB.png' %}" width="35rem" alt="Bishop">
-                  </label>
-                  <label class="btn btn-secondary">
-                    <input type="radio" name="promotion_options" value="R">
-                    <img src="{% static 'vendor/chesspieces/wikipedia/bR.png' %}" width="35rem" alt="Rook">
-                  </label>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="draw_request_checkbox">Request draw from the opponent ?</label>
-                <div>
-                  <input data-toggle="toggle" data-on="Yes" data-off="No" type="checkbox" id="draw_request_checkbox">
-                </div>
-              </div>
-            </form>
+</head>
 
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div class="col-xs-12 col-md-6 col-with-padding">
-      <ul class="sortable" style="min-height: 10px">
-        <li class="info-pane" style="position: relative; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-          <div class="pane-title">Chat</div>
-          <div class="pane-body" style="display: flex; flex-direction: column; justify-content: flex-end;">
-            <!--  -->
-            <ul class="nav nav-tabs full-pane-x" style="display: flex; justify-content: center" id="myTab" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="messages-tab" data-toggle="tab" href="#messages" role="tab" aria-controls="messages" aria-selected="true">Messages</a>
+
+
+
+<body>
+
+  <canvas id="render-canvas"></canvas>
+  <div style="position: fixed; top: 0; left: 0; right: 0; height: 0; z-index: 0;">
+    <div id="game-menu" style="width: 500px; margin-right: 15px; float: right; background: white; ">
+      <div>
+        <div>
+          <div class="col-with-padding">
+            <ul class="sortable">
+
+              <li class="info-pane">
+                <div class="pane-title">Game status</div>
+                <div class="pane-body" id="status_area"></div>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" id="online-users-tab" data-toggle="tab" href="#online-users" role="tab" aria-controls="profile" aria-selected="false">Online users</a>
+
+              <li class="info-pane">
+
+                <div class="pane-title">Move Options</div>
+                <div class="pane-body">
+
+                  <form>
+                    <div class="form-group">
+                      <label for="draw_request_checkbox">Request draw from the opponent ?</label>
+                      <div>
+                        <input data-toggle="toggle" data-on="Yes" data-off="No" type="checkbox"
+                          id="draw_request_checkbox">
+                      </div>
+                    </div>
+                  </form>
+
+                </div>
               </li>
+
+              <li class="info-pane"
+                style="position: relative; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+                <div class="pane-title">Chat</div>
+                <div class="pane-body" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                  <!--  -->
+                  <ul class="nav nav-tabs full-pane-x" style="display: flex; justify-content: center" id="myTab"
+                    role="tablist">
+                    <li class="nav-item">
+                      <a class="nav-link active" id="messages-tab" data-toggle="tab" href="#messages" role="tab"
+                        aria-controls="messages" aria-selected="true">Messages</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="online-users-tab" data-toggle="tab" href="#online-users" role="tab"
+                        aria-controls="profile" aria-selected="false">Online users</a>
+                    </li>
+                  </ul>
+                  <div class="tab-content" id="myTabContent">
+                    <div class="chat tab-pane full-pane-x full-pane-y fade show active" id="messages" role="tabpanel"
+                      aria-labelledby="messages-tab">
+                      <!-- Chat messages -->
+                      <ul id="chat_messages_ul" style="display: block; max-height: 20rem; overflow-y: scroll;">
+                        <!-- Messages inserted here by javascript -->
+                      </ul>
+                      <!-- Send button -->
+                      <div class="input-group" style="margin-bottom: 0;">
+                        <textarea id="chat-textarea" class="form-control input-sm expand"
+                          placeholder="Type your message here..."></textarea>
+                        <button class="input-group-append">
+                          <button class="btn btn-warning" style="border-radius:0px;" id="chat-send-button">
+                            Send (Ctrl + Enter)
+                          </button>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade full-pane-x full-pane-y" id="online-users" role="tabpanel"
+                      aria-labelledby="online-users-tab">
+                      <table id="online-users-table" class="table table-hover full-pane-y">
+                        <tbody>
+                          <!-- Rows inserted here by javascript -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </li>
+
             </ul>
-            <div class="tab-content" id="myTabContent">
-              <div class="chat tab-pane full-pane-x full-pane-y fade show active" id="messages" role="tabpanel" aria-labelledby="messages-tab">
-                <!-- Chat messages -->
-                <ul id="chat_messages_ul" style="display: block; max-height: 20rem; overflow-y: scroll;">
-                  <!-- Messages inserted here by javascript -->
-                </ul>
-                <!-- Send button -->
-                <div class="input-group" style="margin-bottom: 0;">
-                  <textarea id="chat-textarea" class="form-control input-sm expand" placeholder="Type your message here..."></textarea>
-                  <button class="input-group-append">
-                    <button class="btn btn-warning" style="border-radius:0px;" id="chat-send-button">
-                      Send (Ctrl + Enter)
-                    </button>
-                  </button>
-                </div>
-              </div>
-              <div class="tab-pane fade full-pane-x full-pane-y" id="online-users" role="tabpanel" aria-labelledby="online-users-tab">
-                <table id="online-users-table" class="table table-hover full-pane-y">
-                  <tbody>
-                    <!-- Rows inserted here by javascript -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
-        </li>
-      </ul>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-{% endblock %} {% block script %}
+  <script src="{% static 'vendor/jquery.js' %}"></script>
+  <script src="{% static 'vendor/what-input.js' %}"></script>
+  <script src="{% static 'vendor/popper.min.js' %}"></script>
+  <script src="{% static 'vendor/keyboard.js' %}"></script>
+  <script src="{% static 'vendor/pretty-date.js' %}"></script>
+  <script src="{% static 'vendor/string-to-color.js' %}"></script>
+  <script src="{% static 'vendor/jquery.textarea-expander.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap-toggle.js' %}"></script>
+  <script src="{% static 'vendor/jquery-ui.min.js' %}"></script>
+  <script src="{% static 'vendor/js/dat.gui.min.js' %}"></script>
+  <script src="{% static 'vendor/js/three.min.js' %}"></script>
+  <script src="{% static 'vendor/js/OrbitControls.js' %}"></script>
+  <script src="{% static 'vendor/js/MTLLoader.js' %}"></script>
+  <script src="{% static 'vendor/js/OBJLoader.js' %}"></script>
+  <script src="{% static 'vendor/js/pointerlock-controls.js' %}"></script>
+  <script src="{% static 'vendor/js/SPE.js' %}"></script>
+  <script src="{% static 'vendor/js/bundle.js' %}"></script>
+  <!-- <script src="{% static 'vendor/three.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/OrbitControls.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/chessboard.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/chess.min.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/chessboard3.js' %}"></script> -->
+  <!-- <script src="{% static 'chessgames/webchess-board.js' %}"></script> -->
+  <script src="{% static 'chatchannels/chat-ui.js' %}"></script>
+  <script src="{% static 'vendor/loading-element.js' %}"></script>
+  <script src="{% static 'vendor/jquery-resize.js' %}"></script>
 
-<script src="{% static 'vendor/keyboard.js' %}"></script>
-<script src="{% static 'vendor/pretty-date.js' %}"></script>
-<script src="{% static 'vendor/string-to-color.js' %}"></script>
-<script src="{% static 'vendor/jquery.textarea-expander.js' %}"></script>
-<script src="{% static 'vendor/bootstrap-toggle.js' %}"></script>
-<script src="{% static 'vendor/jquery-ui.min.js' %}"></script>
-<script src="{% static 'vendor/three.js' %}"></script>
-<script src="{% static 'vendor/OrbitControls.js' %}"></script>
-<script src="{% static 'vendor/chessboard.js' %}"></script>
-<script src="{% static 'vendor/chess.min.js' %}"></script>
-<script src="{% static 'vendor/chessboard3.js' %}"></script>
-<script src="{% static 'chessgames/webchess-board.js' %}"></script>
-<script src="{% static 'chatchannels/chat-ui.js' %}"></script>
-<script src="{% static 'vendor/loading-element.js' %}"></script>
+  <!-- Menu slide -->
+  <script>
+    $(document).ready(function () {
+      let mouseinside = false
+      const element = $('#game-menu')
 
+      element.css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
 
-<!-- Chess game manager -->
-<script>
-  $().ready(function () {
+      element.on('mouseenter', function () {
+        new WebchessBoard().pause(true)
+        mouseinside = true
+        $(this).css('transform', 'translateY(0px)')
+      })
 
-    // Helpers BEGIN
+      element.on('mouseleave', function () {
+        new WebchessBoard().pause(false)
+        mouseinside = false
+        $(this).css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
+      })
 
-    function uuidv4() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0,
-          v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v < 10 ? 'a' : v.toString(16);
-      });
-    }
-
-    // Helper END
-
-    function status(html) {
-      status.built_message += html + '<br>';
-      return status;
-    }
-
-    status.built_message = '';
-    status.display = function () {
-      $('#status_area').html(status.built_message);
-      return status;
-    };
-    status.clear = function () {
-      status.built_message = '';
-      return status;
-    };
-
-    var ws = null;
-
-    function create_ws() {
-      ws = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
-        "/" + chessgame_ws_endpoint);
-
-      ws.onopen = function () {
-        status.clear()('Connected just now').display();
-        if (!board) {
-          board = new WebchessBoard('game_board', ui_options, game_options);
+      element.on('resize', function () {
+        console.log('resize !')
+        if (!mouseinside) {
+          element.css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
         }
-        ws.send(JSON.stringify({
-          type: 'status_prompt'
-        }));
+      })
+
+    })
+  </script>
+
+
+  <!-- Chess game manager -->
+  <script>
+    WebchessBoard.onReady(function () {
+
+      // Helpers BEGIN
+
+      function uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v < 10 ? 'a' : v.toString(16);
+        });
+      }
+
+      // Helpers END
+
+      function status(html) {
+        status.built_message += html + '<br>';
+        return status;
+      }
+
+      status.built_message = '';
+      status.display = function () {
+        $('#status_area').html(status.built_message);
+        return status;
+      };
+      status.clear = function () {
+        status.built_message = '';
+        return status;
       };
 
-      ws.onmessage = function (msg) {
-        msg = JSON.parse(msg.data);
-        console.log(msg);
+      var ws = null;
 
-        if (msg.type === 'move') {
+      function create_ws() {
+        ws = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
+          "/" + chessgame_ws_endpoint);
 
-          if (!just_moved) {
-            board.move(msg.move, true);
+        ws.onopen = function () {
+          status.clear()('Connected just now').display();
+          if (!board) {
+            board = new WebchessBoard('game_board', ui_options, game_options);
           }
-
-          status.clear()('You are ' + {
-            'w': 'White',
-            'b': 'Black',
-            null: 'watching'
-          }[side]);
-          status({
-            null: 'The game has not yet started',
-            'w': 'White to move',
-            'b': 'Black to move'
-          }[board.turn()]);
-
-          if (board.fifty_move_rule()) status('Draw suggested (fifty-move rule)');
-          if (board.in_threefold_repetition()) status('Draw suggested (threefold repetition)');
-          if (board.insufficient_material()) status('Draw suggested (insufficient matterial)');
-          if (board.in_check()) status({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' in check');
-          if (board.in_stalemate()) status.clear()({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' stalemated');
-
-          if (msg.draw_requested && !just_moved) {
-            if (side) {
-              var btn_id = uuidv4();
-              status(`Opponent requested draw <br> <button id="${btn_id}" class="button success">Accept</button>`);
-              setTimeout(function () {
-                $(`#${btn_id}`).click(function () {
-                  $(this).off('click');
-                  $(this).text('Sending...');
-                  ws.send(JSON.stringify({
-                    type: 'draw_accept'
-                  }));
-                });
-              }, 600);
-            } else {
-              status('Opponent requested draw');
-            }
-          }
-
-          if (board.in_checkmate()) status.clear()({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' checkmated');
-
-          setTimeout(status.display, 500);
-          just_moved = false;
-
-        } else if (msg.type === 'game_status' && initial_status === null) {
-          initial_status = msg.status;
-          side = initial_status.white === initial_status.whoami ?
-            'w' :
-            initial_status.black === initial_status.whoami ?
-            'b' :
-            null;
-          initial_status.moves.forEach(function (move) {
-            board.move(move, false);
-          });
-
-          if (!initial_status.turn && initial_status.victory) {
-            return status.clear()('The game has ended: ' + {
-              'draw': 'Draw',
-              'white': 'White wins',
-              'black': 'Black wins'
-            }[initial_status.victory]).display();
-          }
-
-          status.clear()('You are ' + {
-            'w': 'White',
-            'b': 'Black',
-            null: 'watching'
-          }[side]);
-          status({
-            null: 'The game has not yet started',
-            'white': 'White to move',
-            'black': 'Black to move'
-          }[initial_status.turn]).display();
-          if (board.fifty_move_rule()) status('Draw suggested (fifty-move rule)');
-          if (board.in_threefold_repetition()) status('Draw suggested (threefold repetition)');
-          if (board.insufficient_material()) status('Draw suggested (insufficient matterial)');
-          if (board.in_check()) status({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' in check');
-          if (board.in_stalemate()) status.clear()(({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' stalemated'));
-          if (board.in_checkmate()) status.clear()({
-            'w': 'White',
-            'b': 'Black'
-          }[board.turn()] + ' checkmated');
-          status.display();
-
-        } else if (msg.type === 'game_start') {
-          initial_status = null;
           ws.send(JSON.stringify({
             type: 'status_prompt'
           }));
+        };
 
-        } else if (msg.type === 'pending_timeout') {
-          status.clear()('Game canceled because no opponent appeared within time limit. You may host another')
-            .display();
+        ws.onmessage = function (msg) {
+          msg = JSON.parse(msg.data);
+          console.log(msg);
 
-        } else if (msg.type === 'game_end') {
+          if (msg.type === 'move') {
+
+            if (!just_moved) {
+              board.move(msg.move, true);
+            }
+
+            status.clear()('You are ' + {
+              'w': 'White',
+              'b': 'Black',
+              null: 'watching'
+            }[side]);
+            status({
+              null: 'The game has not yet started',
+              'w': 'White to move',
+              'b': 'Black to move'
+            }[board.turn()]);
+
+            if (board.fifty_move_rule()) status('Draw suggested (fifty-move rule)');
+            if (board.in_threefold_repetition()) status('Draw suggested (threefold repetition)');
+            if (board.insufficient_material()) status('Draw suggested (insufficient material)');
+            if (board.in_check()) status({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' in check');
+            if (board.in_stalemate()) status.clear()({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' stalemated');
+
+            if (msg.draw_requested && !just_moved) {
+              if (side) {
+                var btn_id = uuidv4();
+                status(`Opponent requested draw <br> <button id="${btn_id}" class="button success">Accept</button>`);
+                setTimeout(function () {
+                  $(`#${btn_id}`).click(function () {
+                    $(this).off('click');
+                    $(this).text('Sending...');
+                    ws.send(JSON.stringify({
+                      type: 'draw_accept'
+                    }));
+                  });
+                }, 600);
+              } else {
+                status('Opponent requested draw');
+              }
+            }
+
+            if (board.in_checkmate()) status.clear()({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' checkmated');
+
+            setTimeout(status.display, 500);
+            just_moved = false;
+
+          } else if (msg.type === 'game_status' && initial_status === null) {
+            initial_status = msg.status;
+            side = initial_status.white === initial_status.whoami ?
+              'w' :
+              initial_status.black === initial_status.whoami ?
+                'b' :
+                null;
+            if (initial_status.turn) {
+              board.setPlayerSide(side)
+            }
+            initial_status.moves.forEach(function (move) {
+              board.move(move, false);
+            });
+
+            if (!initial_status.turn && initial_status.victory) {
+              return status.clear()('The game has ended: ' + {
+                'draw': 'Draw',
+                'white': 'White wins',
+                'black': 'Black wins'
+              }[initial_status.victory]).display();
+            }
+
+            status.clear()('You are ' + {
+              'w': 'White',
+              'b': 'Black',
+              null: 'watching'
+            }[side]);
+            status({
+              null: 'The game has not yet started',
+              'white': 'White to move',
+              'black': 'Black to move'
+            }[initial_status.turn]).display();
+            if (board.fifty_move_rule()) status('Draw suggested (fifty-move rule)');
+            if (board.in_threefold_repetition()) status('Draw suggested (threefold repetition)');
+            if (board.insufficient_material()) status('Draw suggested (insufficient matterial)');
+            if (board.in_check()) status({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' in check');
+            if (board.in_stalemate()) status.clear()(({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' stalemated'));
+            if (board.in_checkmate()) status.clear()({
+              'w': 'White',
+              'b': 'Black'
+            }[board.turn()] + ' checkmated');
+            status.display();
+
+          } else if (msg.type === 'game_start') {
+            board.setPlayerSide(side);
+            initial_status = null;
+            ws.send(JSON.stringify({
+              type: 'status_prompt'
+            }));
+
+          } else if (msg.type === 'pending_timeout') {
+            status.clear()('Game canceled because no opponent appeared within time limit. You may host another')
+              .display();
+
+          } else if (msg.type === 'game_end') {
+            side = null;
+            status.clear()
+              ('Game ended' + (msg.out_of_time ? ' (move timeout)' : ''))
+              ({
+                'white': 'White wins',
+                'black': 'Black wins',
+                'draw': 'It is a draw'
+              }[msg.winner])
+              .display();
+          }
+
+        };
+
+        ws.onerror = function (err) {
+          console.error(err);
+        };
+
+        ws.onclose = function () {
+          if (board) {
+            board.destroy();
+            board = null;
+          }
+          initial_status = null;
+          whoami = null;
           side = null;
-          status.clear()
-            ('Game ended' + (msg.out_of_time ? ' (move timeout)' : ''))
-            ({
-              'white': 'White wins',
-              'black': 'Black wins',
-              'draw': 'It is a draw'
-            }[msg.winner])
-            .display();
-        }
-
-      };
-
-      ws.onerror = function (err) {
-        console.error(err);
-      };
-
-      ws.onclose = function () {
-        if (board) {
-          board.destroy();
-          board = null;
-        }
-        initial_status = null;
-        whoami = null;
-        side = null;
-        status.clear()('Connection lost. Trying to reconnect...').display();
-        setTimeout(create_ws, 500);
-      };
-    }
-
-
-    var chessgame_ws_endpoint = "{{chessgame_ws_endpoint}}";
-
-    create_ws();
-
-    var initial_status = null;
-
-    var whoami = null;
-
-    var side = null;
-
-    var just_moved = false;
-
-    var game_options = {
-      should_request_draw: function () {
-        // bootstrap-toggle renders the input useless. The parent is the one whose class changes...
-        return !$('#draw_request_checkbox').parent().hasClass('off');
-      },
-      /**
-       * @return 'Q' or 'R' or 'N' or 'B' (may be lowercase or uppercase)
-       */
-      get_promotion: function () {
-        return $('input[type="radio"][name="promotion_options"]:checked').val();
-      },
-      /**
-       * Garanteed: Only called on valid move
-       * @param move {string}
-       */
-      on_manual_move: function (move) {
-        setTimeout(status('Waiting server validation...').display, 500);
-        just_moved = true;
-        ws.send(JSON.stringify({
-          type: 'move',
-          request_draw: this.should_request_draw(),
-          move: move
-        }));
+          status.clear()('Connection lost. Trying to reconnect...').display();
+          setTimeout(create_ws, 500);
+        };
       }
-    };
 
-    var ui_options = {
-      start_3D: false,
-      piece_2D_set: "{% static 'vendor/chesspieces/wikipedia/' %}{piece}.png",
-      piece_3D_set: "{% static 'vendor/chesspieces/3D/' %}{piece}.json",
-      font_file: "{% static 'vendor/font/helvetiker.json' %}",
-      intended_width: function () {
-        return $('#game_board').parent().width() - 5;
-      },
-      intended_height: function () {
-        return 0.75 * this.intended_width();
-      },
-      on_resize: function () {
-        $('#game_board').css('visibility', 'visible');
-      },
-      on_drag_start: function () {
-        // false to block drag
-        return side === board.turn();
-      },
-      spare_pieces: false
-    };
 
-    var board = new WebchessBoard('game_board', ui_options, game_options);
+      var chessgame_ws_endpoint = "{{chessgame_ws_endpoint}}";
 
-    $('#chessgame_dimension').change(function () {
-      setTimeout(board.switch_dimensions.bind(board), 300);
+      create_ws();
+
+      var initial_status = null;
+
+      var whoami = null;
+
+      var side = null;
+
+      var just_moved = false;
+
+      var game_options = {
+        should_request_draw: function () {
+          // bootstrap-toggle renders the input useless. The parent is the one whose class changes...
+          return !$('#draw_request_checkbox').parent().hasClass('off');
+        },
+        /**
+         * @return 'Q' or 'R' or 'N' or 'B' (may be lowercase or uppercase)
+         */
+        get_promotion: function () {
+          return $('input[type="radio"][name="promotion_options"]:checked').val();
+        },
+        /**
+         * Guaranteed: Only called on valid move
+         * @param move {string}
+         */
+        on_manual_move: function (move) {
+          // setTimeout(status('Waiting server validation...').display, 500);
+          just_moved = true;
+          ws.send(JSON.stringify({
+            type: 'move',
+            request_draw: this.should_request_draw(),
+            move: move
+          }));
+        }
+      };
+
+      var ui_options = {
+        start_3D: false,
+        piece_2D_set: "{% static 'vendor/chesspieces/wikipedia/' %}{piece}.png",
+        piece_3D_set: "{% static 'vendor/chesspieces/3D/' %}{piece}.json",
+        font_file: "{% static 'vendor/font/helvetiker.json' %}",
+        intended_width: function () {
+          return $('#game_board').parent().width() - 5;
+        },
+        intended_height: function () {
+          return 0.75 * this.intended_width();
+        },
+        on_resize: function () {
+          $('#game_board').css('visibility', 'visible');
+        },
+        on_drag_start: function () {
+          // false to block drag
+          return side === board.turn();
+        },
+        spare_pieces: false
+      };
+
+      var board = new WebchessBoard('game_board', ui_options, game_options);
+
     });
-  });
-</script>
+  </script>
 
-<!-- Chat channel manager -->
-<script>
-  $().ready(function () {
+  <!-- Chat channel manager -->
+  <script>
+    $().ready(function () {
 
-    // Helpers BEGIN
+      // Helpers BEGIN
 
-    function asyncforEach(array, fn) {
-      if (array.length === 0) {
-        return;
+      function asyncforEach(array, fn) {
+        if (array.length === 0) {
+          return;
+        }
+        setTimeout(function () {
+          fn(array[0]);
+          asyncforEach(array.slice(1), fn);
+        })
       }
-      setTimeout(function () {
-        fn(array[0]);
-        asyncforEach(array.slice(1), fn);
-      })
-    }
 
-    function chat_closed_element() {
-      if (!chat_closed_element.cache) {
-        chat_closed_element.__reset_cache();
+      function chat_closed_element() {
+        if (!chat_closed_element.cache) {
+          chat_closed_element.__reset_cache();
+        }
+        return chat_closed_element.cache;
       }
-      return chat_closed_element.cache;
-    }
-    chat_closed_element.__attachclick = function () {
-      chat_closed_element.cache.find('#chat-reconnect-button').click(chat_closed_element.__handle_click);
-    }
-    chat_closed_element.__reset_cache = function () {
-      chat_closed_element.cache = $(
-        `
+      chat_closed_element.__attachclick = function () {
+        chat_closed_element.cache.find('#chat-reconnect-button').click(chat_closed_element.__handle_click);
+      }
+      chat_closed_element.__reset_cache = function () {
+        chat_closed_element.cache = $(
+          `
           <div class="callout alert" style="margin-bottom: 0px; border-radius: 0px;">
             <h5>Connection closed</h5>
             <p>Possible reasons:</p>
@@ -478,19 +516,19 @@
             <button id="chat-reconnect-button" class="button">Try to reconnect</button>
           </div>
         `
-      );
-      chat_closed_element.__attachclick();
-    }
-    chat_closed_element.__handle_click = function () {
-      chat_closed_element.__onclick();
-    }
-    chat_closed_element.onclick = function (handler) {
-      chat_closed_element.__onclick = handler;
-    };
-    chat_closed_element.default_content = function () {
-      chat_closed_element().empty();
-      chat_closed_element().append($(
-        `
+        );
+        chat_closed_element.__attachclick();
+      }
+      chat_closed_element.__handle_click = function () {
+        chat_closed_element.__onclick();
+      }
+      chat_closed_element.onclick = function (handler) {
+        chat_closed_element.__onclick = handler;
+      };
+      chat_closed_element.default_content = function () {
+        chat_closed_element().empty();
+        chat_closed_element().append($(
+          `
         <h5>Connection closed</h5>
         <p>Possible reasons:</p>
         <ul>
@@ -500,202 +538,180 @@
         </ul>
         <button id="chat-reconnect-button" class="button">Try to reconnect</button>
       `
-      ));
-      chat_closed_element.__attachclick();
-    };
-    chat_closed_element.custom_content = function (element) {
-      chat_closed_element().empty();
-      chat_closed_element().append(element);
-    }
-
-    // END
-
-    // Websocket connection BEGIN
-    var channel_ws_endpoint = "{{chatchannel_ws_endpoint}}";
-
-    var ws = null;
-
-    function create_ws_chat() {
-      ws = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
-        "/" + channel_ws_endpoint);
-
-      ws.onopen = function () {
-        msgs_ui.mark_active();
-        ws.send(JSON.stringify({
-          'type': 'latest',
-          offset: last_msg_index + 1,
-          limit: 10
-        }));
+        ));
+        chat_closed_element.__attachclick();
       };
-      window.ws = ws;
-      ws.onclose = function (status) {
-        // if we reopen, we may have to receive missed messages
-        has_all_msgs = false;
-        msgs_ui.mark_inactive();
-        msgs_ui.clear();
-        msgs_ui.insert_end_element(chat_closed_element());
-        chat_closed_element.default_content();
-        chat_closed_element.onclick(function () {
-          chat_closed_element.custom_content($(`
+      chat_closed_element.custom_content = function (element) {
+        chat_closed_element().empty();
+        chat_closed_element().append(element);
+      }
+
+      // END
+
+      // Websocket connection BEGIN
+      var channel_ws_endpoint = "{{chatchannel_ws_endpoint}}";
+
+      var ws = null;
+
+      function create_ws_chat() {
+        ws = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host +
+          "/" + channel_ws_endpoint);
+
+        ws.onopen = function () {
+          msgs_ui.mark_active();
+          ws.send(JSON.stringify({
+            'type': 'latest',
+            offset: last_msg_index + 1,
+            limit: 10
+          }));
+        };
+        window.ws = ws;
+        ws.onclose = function (status) {
+          // if we reopen, we may have to receive missed messages
+          has_all_msgs = false;
+          msgs_ui.mark_inactive();
+          msgs_ui.clear();
+          msgs_ui.insert_end_element(chat_closed_element());
+          chat_closed_element.default_content();
+          chat_closed_element.onclick(function () {
+            chat_closed_element.custom_content($(`
             <p>Reconnecting...</p>
           `));
-          setTimeout(create_ws_chat, 500);
-        })
-      };
+            setTimeout(create_ws_chat, 500);
+          })
+        };
 
-      ws.onmessage = function (msg) {
-        msg = JSON.parse(msg.data);
-        console.log(msg);
-        if (msg.type === 'message') {
-          var is_scrolled_end = msgs_ui.is_scrolled_end();
-          msgs_ui.insert_end(msg.message.content.replace(/\n/g,'<br>'), msg.message.author, msg.message.timestamp);
-          if (is_scrolled_end) {
-            setTimeout(msgs_ui.scroll_end.bind(msgs_ui));
-          }
-        } else if (msg.type === 'latest') {
-          // hide 'loading' element from user
-          fetching_msgs = false;
-          msgs_ui.remove_start(true); // start is the 'loading' element
+        ws.onmessage = function (msg) {
+          msg = JSON.parse(msg.data);
+          console.log(msg);
+          if (msg.type === 'message') {
+            var is_scrolled_end = msgs_ui.is_scrolled_end();
+            msgs_ui.insert_end(msg.message.content.replace(/\n/g, '<br>'), msg.message.author, msg.message.timestamp);
+            if (is_scrolled_end) {
+              setTimeout(msgs_ui.scroll_end.bind(msgs_ui));
+            }
+          } else if (msg.type === 'latest') {
+            // hide 'loading' element from user
+            fetching_msgs = false;
+            msgs_ui.remove_start(true); // start is the 'loading' element
 
-          // avoid duplicate reception of same batch AND receiving again after having collected all
-          if (last_msg_index >= msg.offset + msg.limit - 1 || has_all_msgs) {
-            return;
-          }
-          // we now have more messages
-          last_msg_index = msg.offset + msg.limit - 1;
-          // maybe we downloaded all messages now
-          if (msg.messages.length === 0) {
-            has_all_msgs = true;
-          }
-          // present messages to the user
-          if (!has_all_msgs) {
-            msg.messages.push(loading_element());
-          }
-          asyncforEach(msg.messages, function (message) {
-            // put the loading element on top of all messages
-            if (message === loading_element()) {
-              if (msgs_ui.is_scrollable()) {
-                loading_element.deactivate();
-                msgs_ui.insert_start_element(loading_element());
-                console.log('is scrollable');
-              }
+            // avoid duplicate reception of same batch AND receiving again after having collected all
+            if (last_msg_index >= msg.offset + msg.limit - 1 || has_all_msgs) {
               return;
             }
-            msgs_ui.insert_start(message.content.replace(/\n/g, '<br>'), message.author, message.timestamp);
-          });
+            // we now have more messages
+            last_msg_index = msg.offset + msg.limit - 1;
+            // maybe we downloaded all messages now
+            if (msg.messages.length === 0) {
+              has_all_msgs = true;
+            }
+            // present messages to the user
+            if (!has_all_msgs) {
+              msg.messages.push(loading_element());
+            }
+            asyncforEach(msg.messages, function (message) {
+              // put the loading element on top of all messages
+              if (message === loading_element()) {
+                if (msgs_ui.is_scrollable()) {
+                  loading_element.deactivate();
+                  msgs_ui.insert_start_element(loading_element());
+                  console.log('is scrollable');
+                }
+                return;
+              }
+              msgs_ui.insert_start(message.content.replace(/\n/g, '<br>'), message.author, message.timestamp);
+            });
 
-        } else if (msg.type === 'entered' || msg.type === 'i_am_here') {
-          users_ui.insert(msg.username);
+          } else if (msg.type === 'entered' || msg.type === 'i_am_here') {
+            users_ui.insert(msg.username);
 
-        } else if (msg.type === 'exit') {
-          users_ui.remove(msg.username);
+          } else if (msg.type === 'exit') {
+            users_ui.remove(msg.username);
 
+          }
+        };
+      }
+
+      create_ws_chat();
+
+      // END
+
+
+      // State variables BEGIN 
+      var msgs_ui = new MessageUI('#chat_messages_ul');
+      var has_all_msgs = false;
+      var users_ui = new OnlineUsers('#online-users-table > tbody');
+      var last_msg_index = -1;
+      var fetching_msgs = false;
+      var msg_textarea = $('#chat-textarea');
+      var chat_send_button = $('#chat-send-button');
+
+      function reset_state() {
+        msgs_ui.clear();
+        users_ui.clear();
+        last_msg_index = 0;
+        has_all_msgs = 0;
+      }
+      // END
+
+
+      // Global setup BEGIN
+      msgs_ui.onscrolltop(function () {
+        if (has_all_msgs || fetching_msgs || !loading_element.is_loading_element(msgs_ui.get_start())) {
+          return;
         }
-      };
-    }
+        fetching_msgs = true;
+        loading_element.activate();
+        msgs_ui.scroll_start();
+        setTimeout(function () {
+          ws.send(JSON.stringify({
+            type: 'latest',
+            offset: last_msg_index + 1,
+            limit: 10
+          }));
+        }, 1000);
+      });
 
-    create_ws_chat();
+      msgs_ui.insert_start_element($('<div style="text-align:center;">Connecting...</div>'))
 
-    // END
-
-
-    // State variables BEGIN 
-    var msgs_ui = new MessageUI('#chat_messages_ul');
-    var has_all_msgs = false;
-    var users_ui = new OnlineUsers('#online-users-table > tbody');
-    var last_msg_index = -1;
-    var fetching_msgs = false;
-    var msg_textarea = $('#chat-textarea');
-    var chat_send_button = $('#chat-send-button');
-
-    function reset_state() {
-      msgs_ui.clear();
-      users_ui.clear();
-      last_msg_index = 0;
-      has_all_msgs = 0;
-    }
-    // END
-
-
-    // Global setup BEGIN
-    msgs_ui.onscrolltop(function () {
-      if (has_all_msgs || fetching_msgs || ! loading_element.is_loading_element(msgs_ui.get_start())) {
-        return;
+      function attempt_send() {
+        var msg = msg_textarea.val().trim();
+        if (msg) {
+          ws.send(JSON.stringify({
+            type: 'message',
+            message: msg
+          }));
+          msg_textarea.val('');
+        }
       }
-      fetching_msgs = true;
-      loading_element.activate();
-      msgs_ui.scroll_start();
-      setTimeout(function () {
-        ws.send(JSON.stringify({
-          type: 'latest',
-          offset: last_msg_index + 1,
-          limit: 10
-        }));
-      }, 1000);
-    });
 
-    msgs_ui.insert_start_element($('<div style="text-align:center;">Connecting...</div>'))
+      chat_send_button.click(attempt_send);
+      msg_textarea.focusin(function () {
+        keyboardJS.setContext('textarea focused');
+      });
+      msg_textarea.focusout(function () {
+        keyboardJS.setContext('textarea unfocused');
+      })
 
-    function attempt_send() {
-      var msg = msg_textarea.val().trim();
-      if (msg) {
-        ws.send(JSON.stringify({
-          type: 'message',
-          message: msg
-        }));
-        msg_textarea.val('');
-      }
-    }
-
-    chat_send_button.click(attempt_send);
-    msg_textarea.focusin(function () {
       keyboardJS.setContext('textarea focused');
-    });
-    msg_textarea.focusout(function () {
+      keyboardJS.bind('ctrl + enter', function (e) {
+        attempt_send();
+      });
       keyboardJS.setContext('textarea unfocused');
-    })
+      keyboardJS.watch();
 
-    keyboardJS.setContext('textarea focused');
-    keyboardJS.bind('ctrl + enter', function (e) {
-      attempt_send();
+      // END
+
+
     });
-    keyboardJS.setContext('textarea unfocused');
-    keyboardJS.watch();
+  </script>
 
-    // END
+  
+  {% include 'ajax-csrf.html' %}
+  {% include 'bootstrap.js.html' %}
+  {% include 'foundation.js.html' %}
 
 
-  });
-</script>
+</body>
 
-<!-- sortable items manager -->
-<script>
-  $(".sortable").sortable({
-    placeholder: 'ui-sortable-placeholder',
-    delay: 150,
-    handle: ".pane-title",
-    intersect: "pointer",
-    scrollSpeed: 10,
-    cursor: "move",
-    cursorAt: {
-      left: 0,
-      top: 0
-    },
-    helper: function (event, element) {
-      var title = $(element).children('.pane-title').text();
-      var helper = $(
-        '<div class="info-pane" style="display: inline-block; width: 40px; height: 40px;"> <div class="pane-title">' +
-        title + '</div> </div>');
-      return helper[0];
-    },
-    connectWith: '.sortable'
-  });
-  $(".sortable").disableSelection();
-
-  // li must resize when contained chessboard increases
-  $('li').children().resize(function () {
-    $(this.parent).css('width', $(this).outerWidth());
-  });
-</script>
-
-{% endblock %}
+</html>
