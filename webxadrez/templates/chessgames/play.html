@@ -75,7 +75,7 @@
 
   <canvas id="render-canvas"></canvas>
   <div style="position: fixed; top: 0; left: 0; right: 0; height: 0; z-index: 0;">
-    <div id="game-menu" style="width: 500px; margin-right: 15px; float: right; background: white; ">
+    <div id="game-menu" style="width: 500px; margin-right: 15px; float: right; background: white; opacity: 0.6;">
       <div>
         <div>
           <div class="col-with-padding">
@@ -88,12 +88,11 @@
 
               <li class="info-pane">
 
-                <div class="pane-title">Move Options</div>
+                <div class="pane-title">Request draw from the opponent ?</div>
                 <div class="pane-body">
 
                   <form>
                     <div class="form-group">
-                      <label for="draw_request_checkbox">Request draw from the opponent ?</label>
                       <div>
                         <input data-toggle="toggle" data-on="Yes" data-off="No" type="checkbox"
                           id="draw_request_checkbox">
@@ -189,25 +188,35 @@
     $(document).ready(function () {
       let mouseinside = false
       const element = $('#game-menu')
+      
+      window.addEventListener('menuIsDirty', () => {
+        if (mouseinside) {
+          return
+        }
+        element.css('border-bottom', '10px solid red')
+      })
 
-      element.css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
+      element.css('transform', 'translateY(' + (- element.innerHeight()) + 'px)')
 
       element.on('mouseenter', function () {
         new WebchessBoard().pause(true)
         mouseinside = true
         $(this).css('transform', 'translateY(0px)')
+
+        element.css('border-bottom', 'none')
       })
 
       element.on('mouseleave', function () {
+        element.css('border-bottom', '10px solid white')
         new WebchessBoard().pause(false)
         mouseinside = false
-        $(this).css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
+        $(this).css('transform', 'translateY(' + (- element.innerHeight()) + 'px)')
       })
 
       element.on('resize', function () {
         console.log('resize !')
         if (!mouseinside) {
-          element.css('transform', 'translateY(' + (10 - element.innerHeight()) + 'px)')
+          element.css('transform', 'translateY(' + (- element.innerHeight()) + 'px)')
         }
       })
 
@@ -239,6 +248,7 @@
       status.built_message = '';
       status.display = function () {
         $('#status_area').html(status.built_message);
+        window.dispatchEvent(new Event('menuIsDirty'))
         return status;
       };
       status.clear = function () {
@@ -582,6 +592,7 @@
         };
 
         ws.onmessage = function (msg) {
+          window.dispatchEvent(new Event('menuIsDirty'))
           msg = JSON.parse(msg.data);
           console.log(msg);
           if (msg.type === 'message') {
@@ -706,7 +717,7 @@
     });
   </script>
 
-  
+
   {% include 'ajax-csrf.html' %}
   {% include 'bootstrap.js.html' %}
   {% include 'foundation.js.html' %}
