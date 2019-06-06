@@ -15,7 +15,7 @@ def __win_by_timer(game_id, move_count, winning_player):
         return
 
     # Avoid overwriting ended games
-    if (game.win is ('white', 'black', 'draw')):
+    if (game.win in ('white', 'black', 'draw')):
         return
 
     game.win = winning_player
@@ -26,4 +26,4 @@ def __win_by_timer(game_id, move_count, winning_player):
 
 
 def run_timer(game_id, move_count, winning_player):
-    Timer(300, __win_by_timer, args=(game_id, move_count, winning_player)).start()
+    Timer(600, __win_by_timer, args=(game_id, move_count, winning_player)).start()
