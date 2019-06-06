@@ -21,7 +21,7 @@ class GmailBackend(BaseEmailBackend):
                 'client_secret': cred.client_secret,
                 'scopes': cred.scopes
             })
-            self.service = build('gmail', 'v1', credentials=self.credentials)
+            self.service = build('gmail', 'v1', credentials=self.credentials, cache_discovery=False)
         except UserToken.DoesNotExist:
             self.credentials = None
 
