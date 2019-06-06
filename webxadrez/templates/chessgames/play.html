@@ -203,7 +203,7 @@
         mouseinside = true
         $(this).css('transform', 'translateY(0px)')
 
-        element.css('border-bottom', 'none')
+        setTimeout(() => element.css('border-bottom', 'none'), 100)
       })
 
       element.on('mouseleave', function () {
