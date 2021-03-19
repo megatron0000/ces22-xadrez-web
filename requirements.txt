@@ -21,7 +21,7 @@ daphne==2.1.1
 Django==2.0.5
 django-rest-framework==0.1.0
 django-sitetree==1.10.0
-djangorestframework==3.8.2
+djangorestframework==3.11.2
 google-api-python-client==1.6.7
 google-auth==1.4.1
 google-auth-httplib2==0.0.3
